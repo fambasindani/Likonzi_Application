@@ -1,0 +1,54 @@
+name: securite
+description: "Sécurité Sociale RDC — application mobile Police / Citoyens."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # Gestion d'état
+  provider: ^6.1.5+1
+
+  # Réseau
+  dio: ^5.11.1
+  socket_io_client: ^3.1.6
+
+  # Configuration (.env)
+  flutter_dotenv: ^6.0.1
+  shared_preferences: ^2.5.5
+
+  # Cartes & géolocalisation
+  flutter_map: ^8.3.2
+  latlong2: ^0.10.1
+  geolocator: ^14.0.2
+
+  # Fichiers & médias
+  image_picker: ^1.2.2
+  file_picker: ^11.0.3
+
+  # Formatage des dates / nombres (fr_FR)
+  intl: ^0.20.2  # contraint par flutter_localizations
+  url_launcher: ^6.3.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+
+  # .env doit être embarqué : flutter_dotenv le lit au démarrage.
+  # ATTENTION : il est donc visible dans le binaire — ne jamais y mettre de secret.
+  assets:
+    - .env
+    - assets/

@@ -1,0 +1,53 @@
+# =====================================================================
+# Racine du dépôt Likonzi_Application
+# =====================================================================
+
+# ---- Python / Backend ------------------------------------------------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+mypy_cache/
+*.egg-info/
+
+# Secrets et configuration locale : JAMAIS versionnes.
+# Backend/.env contient SECRET_KEY, JWT_SECRET_KEY et le mot de passe BDD.
+Backend/.env
+.env.local
+*.env.local
+
+# Preuves et fichiers uploades
+Backend/static/uploads/
+Backend/static/Image/[0-9a-f]*.jpeg
+Backend/static/Image/[0-9a-f]*.jpg
+Backend/instance/
+test.db
+
+# ---- Flutter ---------------------------------------------------------
+securite_flutter/.dart_tool/
+securite_flutter/build/
+securite_flutter/.flutter-plugins
+securite_flutter/.flutter-plugins-dependencies
+securite_flutter/.packages
+securite_flutter/android/.gradle/
+securite_flutter/android/local.properties
+securite_flutter/android/key.properties
+securite_flutter/android/app/debug/
+securite_flutter/android/app/profile/
+*.jks
+*.keystore
+
+# ---- React Native (archive) -----------------------------------------
+securite/node_modules/
+securite/android/app/build/
+securite/ios/build/
+securite/vendor/
+
+# ---- Editeurs / OS ---------------------------------------------------
+.idea/
+.vscode/
+*.iml
+Thumbs.db
+.DS_Store

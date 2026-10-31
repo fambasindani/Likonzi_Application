@@ -1,0 +1,20 @@
+# Environnement local
+.env
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Artefacts
+test.db
+.pytest_cache/
+.ruff_cache/
+mypy_cache/
+
+# Fichiers uploadés (les preuves ne doivent jamais atterrir dans un dépôt)
+static/uploads/
+
+# Logs
+*.log
+yarn-error.log

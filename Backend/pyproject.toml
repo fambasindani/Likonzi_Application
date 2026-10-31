@@ -1,0 +1,23 @@
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+extend-exclude = ["legacy", ".venv", "__pycache__"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "C4", "RUF"]
+ignore = [
+  "E501",   # longueur de ligne : les chaînes métier sont parfois longues
+  "B008",   # appel en valeur par défaut : courant dans les décorateurs Flask
+  "RUF022", # __all__ trié automatiquement
+]
+
+[tool.ruff.lint.per-file-ignores]
+"app/models/*" = ["UP037"]  # annotations entre guillemets : références croisées modèles
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_suite.py"]
+addopts = "-q --strict-markers"

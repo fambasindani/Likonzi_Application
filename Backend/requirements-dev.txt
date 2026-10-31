@@ -1,0 +1,5 @@
+# Outils de développement — `python -m pip install -r requirements-dev.txt`
+-r requirements.txt
+
+ruff>=0.6
+pytest>=8.0,<9   # pytest 9 utilise dataclasses(slots=True), cassé sous Python 3.10.0

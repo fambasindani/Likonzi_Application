@@ -1,0 +1,26 @@
+# API Sécurité Sociale v2 — Backend (Flask + SQLAlchemy)
+# Python 3.10+
+#
+# Installation :
+#   python -m pip install -r requirements.txt
+
+Flask>=3.0,<4.0
+Flask-SQLAlchemy>=3.1,<4.0
+SQLAlchemy>=2.0,<3.0
+Flask-Bcrypt>=1.0.1
+flask-cors>=4.0
+python-dotenv>=1.0
+PyJWT>=2.8,<3.0
+flask-socketio>=5.7,<6.0
+click>=8.1
+
+# Pilote MySQL — `mysql+pymysql://` (pur Python, aucun compilateur requis)
+PyMySQL>=1.1,<2.0
+
+# Alternatives possibles via DB_DRIVER dans .env :
+#   DB_DRIVER=mysqlconnector   -> mysql-connector-python>=8.0
+#   DB_DRIVER=mysqldb          -> mysqlclient>=2.2
+
+# Utilitaires de développement (optionnels)
+# requests>=2.31
+# Werkzeug>=2.3   # déjà amené par Flask
