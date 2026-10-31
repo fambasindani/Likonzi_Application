@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- L'application est forcee en theme clair : le fond reste le meme en mode nuit. -->
+<resources>
+    <color name="fond_app">#F7F8FC</color>
+</resources>

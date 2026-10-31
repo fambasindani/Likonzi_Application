@@ -50,10 +50,16 @@ class AppSecurite extends StatelessWidget {
         // écarte TOUT le contenu (boutons, cartes, FAB) de cet espace.
         // SafeArea retire le padding pour ses descendants : les écrans qui ont
         // déjà leur propre SafeArea ne sont pas doublés.
-        builder: (context, child) => SafeArea(
-          top: false,
-          bottom: true,
-          child: child ?? const SizedBox.shrink(),
+        // Le ColoredBox peint la bande ainsi découverte avec la couleur de
+        // fond de l'application : sans elle, cette bande montrait le blanc
+        // du système et l'écran semblait coupé en deux au démarrage.
+        builder: (context, child) => ColoredBox(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          child: SafeArea(
+            top: false,
+            bottom: true,
+            child: child ?? const SizedBox.shrink(),
+          ),
         ),
         home: const VueDemarrage(),
         routes: {ShellView.chemin: (_) => const ShellView()},

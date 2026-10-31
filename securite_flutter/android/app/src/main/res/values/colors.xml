@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fond de l'application (AppCouleurs.fond) : utilise par le demarrage
+         natif ET par le fond de fenetre, pour qu'aucune bande blanche n'apparaisse
+         pendant le chargement du moteur Flutter. -->
+    <color name="fond_app">#F7F8FC</color>
+</resources>
