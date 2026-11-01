@@ -59,7 +59,7 @@ def test_lint_propre() -> None:
     if not os.path.isfile(ruff):
         ruff = "ruff"
     proc = subprocess.run(
-        [ruff, "check", "app", "run.py", "tests"],
+        [ruff, "check", "app", "app.py", "tests"],
         cwd=BACKEND,
         capture_output=True,
         text=True,

@@ -56,16 +56,20 @@ class SocketService {
 
     _socket?.dispose();
     final url = ConfigService.socketUrl;
-    _socket = io.io(
-      url,
-      io.OptionBuilder()
-          .enableAutoConnect()
-          .enableReconnection()
-          .setTransports(['websocket', 'polling'])
-          .setAuth({'token': token})
-          .setExtraHeaders({'Authorization': 'Bearer $token'})
-          .build(),
-    );
+    // Montage sous un préfixe (DispatcherMiddleware, ex. `/backend`) : le
+    // chemin Engine.IO doit être `<préfixe>/socket.io` — socket.io ne le
+    // déduit pas de l'hôte. Sans cela la requête part vers `/socket.io` à la
+    // racine, servi par une autre application du même hébergeur.
+    final prefixe =
+        (Uri.tryParse(url)?.path ?? '').replaceAll(RegExp(r'/+$'), '');
+    final options = io.OptionBuilder()
+        .enableAutoConnect()
+        .enableReconnection()
+        .setTransports(['websocket', 'polling'])
+        .setAuth({'token': token})
+        .setExtraHeaders({'Authorization': 'Bearer $token'});
+    if (prefixe.isNotEmpty) options.setPath('$prefixe/socket.io');
+    _socket = io.io(url, options.build());
 
     _socket!
       ..onConnect((_) {

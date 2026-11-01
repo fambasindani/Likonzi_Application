@@ -29,7 +29,7 @@ cd Backend
 python -m venv .venv
 .venv\Scripts\pip install -r requirements.txt
 copy .env.example .env        # puis renseigner SECRET_KEY, JWT_SECRET_KEY
-.venv\Scripts\python run.py
+.venv\Scripts\python app.py
 ```
 
 Compte de démonstration : `admin@securite.cd` / `12345678`.

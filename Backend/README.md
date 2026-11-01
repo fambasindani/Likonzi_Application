@@ -26,10 +26,10 @@ python -m venv .venv
 copy .env.example .env        # puis adapter DB_*, SECRET_KEY, JWT_SECRET_KEY
 
 # 4. Lancer
-.venv\Scripts\python.exe run.py
+.venv\Scripts\python.exe app.py
 ```
 
-Sur Linux/macOS : `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/python run.py`
+Sur Linux/macOS : `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/python app.py`
 
 **Compte de démarrage** (créé par le script SQL) :
 
@@ -44,9 +44,9 @@ Sur Linux/macOS : `python3 -m venv .venv && .venv/bin/pip install -r requirement
 ### Commandes CLI
 
 ```bash
-.venv\Scripts\flask --app run.py check-db      # vérifie la connexion + les tables
-.venv\Scripts\flask --app run.py init-db       # db.create_all() (filet de sécurité)
-.venv\Scripts\flask --app run.py create-admin --email a@b.cd --password Mot2Passe
+.venv\Scripts\flask --app app.py check-db      # vérifie la connexion + les tables
+.venv\Scripts\flask --app app.py init-db       # db.create_all() (filet de sécurité)
+.venv\Scripts\flask --app app.py create-admin --email a@b.cd --password Mot2Passe
 ```
 
 ### Tests
@@ -56,7 +56,7 @@ Sur Linux/macOS : `python3 -m venv .venv && .venv/bin/pip install -r requirement
 .venv\Scripts\python.exe tests\test_metier.py    # 110 vérifications — alertes, dossiers, preuves…
 .venv\Scripts\python.exe tests\test_temps_reel.py # 27 vérifications — Socket.IO + rate limiting
 .venv\Scripts\python.exe -m pytest               # 4 tests : lance les 3 suites + lint
-.venv\Scripts\ruff.exe check app run.py tests    # lint (0 erreur attendu)
+.venv\Scripts\ruff.exe check app app.py tests    # lint (0 erreur attendu)
 ```
 
 > `requirements-dev.txt` : pytest est figé `<9` car pytest 9 utilise
@@ -68,7 +68,7 @@ Sur Linux/macOS : `python3 -m venv .venv && .venv/bin/pip install -r requirement
 
 ```
 Backend/
-├── run.py                    # point d'entrée
+├── app.py                    # point d'entrée
 ├── .env / .env.example       # configuration
 ├── requirements.txt
 ├── requirements-dev.txt      # ruff + pytest
@@ -243,7 +243,7 @@ curl http://127.0.0.1:1200/api/v1/users \
 
 ### Temps réel — Socket.IO
 
-`python run.py` monte le middleware Engine.IO : l'endpoint `/socket.io/` répond
+`python app.py` monte le middleware Engine.IO : l'endpoint `/socket.io/` répond
 sur le **même port** que l'API (aucun broker requis, `async_mode=threading`).
 
 ```js
@@ -345,3 +345,153 @@ Fait :
 
 Reste à faire : rate-limiting, HTTPS obligatoire, en-têtes de sécurité,
 rotation des secrets, sauvegardes chiffrées.
+
+---
+
+## 7. Déploiement — PythonAnywhere (avec `ocr/` + `backend/`)
+
+Structure retenue sur le serveur :
+
+```text
+/home/sindani/monapplication/
+├── ocr/                      # projet OCR  → monté à la racine  « / »
+├── backend/                  # CE projet   → monté sous        « /backend »
+│   ├── app/                  #   package Flask (factory create_app)
+│   ├── app.py                #   point d'entrée local + objet WSGI `app`
+│   └── .env                  #   à créer sur place (jamais versionné)
+├── venv/                     # virtualenv python3.10 partagé
+└── securite_sociale_v2.sql   # schéma de la base
+```
+
+> Le dossier doit s'appeler exactement `backend` (minuscules) : le WSGI fait
+> `import backend.app`, et la casse compte sur Linux.
+
+### 7.1 Ce qu'il faut installer
+
+Un seul virtualenv pour les deux projets — celui qui existe déjà (`venv`) :
+
+```bash
+cd /home/sindani/monapplication
+
+# le code : git clone, ou téléversement du dépôt puis renommage Backend -> backend
+ls backend/requirements.txt
+
+python3.10 -m venv venv            # seulement si venv n'existe pas
+venv/bin/pip install --upgrade pip
+venv/bin/pip install -r backend/requirements.txt        # runtime (Flask, SQLAlchemy, Socket.IO, PyMySQL…)
+venv/bin/pip install -r backend/requirements-dev.txt    # optionnel : ruff + pytest
+```
+
+Rien d'autre : `PyMySQL` est pur Python (aucun compilateur), MySQL et les
+librairies système sont déjà fournis par PythonAnywhere (Python 3.10).
+
+Le fichier `wsgi.py` ajoute `venv/lib/python3.10/site-packages` à `sys.path` :
+c'est cette installation qui est lue au démarrage.
+
+### 7.2 Base de données MySQL
+
+1. Onglet **MySQL** du tableau de bord : créer une base et noter
+   *host / user / password / name* (MySQL dépend du plan : vérifiez l'onglet).
+2. Importer le schéma (23 tables, 6 vues, 4 triggers, seeds, compte admin) :
+
+```bash
+mysql -h <HOST> -u <USER> -p --default-character-set=utf8mb4 \
+      < /home/sindani/monapplication/securite_sociale_v2.sql
+```
+
+Le fichier commence par `CREATE DATABASE IF NOT EXISTS securite_sociale_v2;`
+puis `USE …` : nommez la base de la même façon, ou éditez ces deux lignes.
+
+### 7.3 Fichier `.env` du backend (jamais versionné — à créer sur place)
+
+```bash
+cd /home/sindani/monapplication/backend
+cp .env.example .env
+```
+
+Renseigner au minimum :
+
+| Variable | Valeur |
+|---|---|
+| `FLASK_ENV` | `production` |
+| `SECRET_KEY` / `JWT_SECRET_KEY` | deux valeurs **neuves** : `python3 -c "import secrets; print(secrets.token_urlsafe(48))"` |
+| `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` | coordonnées de l'onglet MySQL |
+| `CORS_ORIGINS` | `*` ou l'URL de l'application mobile |
+| `MAIL_ENABLED` | `false` tant que le SMTP n'est pas configuré |
+
+`app/__init__.py` charge ce `.env` automatiquement au démarrage (chemin absolu
+dérivé de `__file__` : le `os.chdir` du WSGI n'a aucune incidence).
+
+### 7.4 Configuration WSGI (onglet **Web**)
+
+Fichier `/var/www/sindani_pythonanywhere_com_wsgi.py` — **les deux applications
+côte à côte** :
+
+```python
+import sys
+import os
+
+path = '/home/sindani/monapplication'
+if path not in sys.path:
+    sys.path.insert(0, path)
+
+os.chdir(path)
+
+venv_site_packages = '/home/sindani/monapplication/venv/lib/python3.10/site-packages'
+if venv_site_packages not in sys.path:
+    sys.path.insert(0, venv_site_packages)
+
+from ocr.app import app as ocr_app
+
+# IMPORTANT : `backend.app` désigne le PACKAGE `backend/app/` (la factory),
+# pas le fichier `backend/app.py` — Python donne la priorité au paquet.
+from backend.app import create_app
+backend_app = create_app('production')
+
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
+
+application = DispatcherMiddleware(ocr_app, {
+    '/backend': backend_app,
+})
+```
+
+Ensuite **Reload** (onglet Web) et tester `https://sindani.pythonanywhere.com/backend/api/v1/health`.
+
+Points clés :
+
+- `create_app('production')` force `ProductionConfig` (indépendamment du `.env`).
+- `DispatcherMiddleware` retire le préfixe `/backend` avant de router : Flask et
+  `/socket.io/` du backend sont donc joignables à `/backend/…`, et la racine
+  reste servie par l'OCR.
+- **Ne pas écrire `from backend.app import app`** : le package `backend/app/`
+  gagne face au fichier `backend/app.py`, et il n'expose pas `app` (seulement
+  `create_app`). Le fichier `app.py` reste le point d'entrée **local**
+  (`python app.py`).
+- Onglet Web → *Virtualenv* : indiquer `venv` (ou laisser le `sys.path` ci-dessus).
+- **Temps réel** : si l'hébergeur ne relaie pas les WebSocket, Flask-SocketIO
+  (mode `threading`) bascule en *long-polling* : tout fonctionne, notifications
+  légèrement moins instantanées.
+
+### 7.5 Fichiers statiques (optionnel)
+
+Sans configuration, Flask sert déjà `/backend/static/…`. Pour déléguer au
+serveur de fichiers (plus rapide) :
+
+| URL | Chemin |
+|---|---|
+| `/backend/static/` | `/home/sindani/monapplication/backend/static` |
+
+### 7.6 Côté application mobile
+
+Le préfixe `/backend` doit apparaître dans les deux URL
+(`securite_flutter/.env`) :
+
+```dotenv
+API_BASE_URL=https://sindani.pythonanywhere.com/backend/api/v1
+SOCKET_URL=https://sindani.pythonanywhere.com/backend
+```
+
+Puis `flutter build apk --release` et réinstallation de l'APK.
+
+Le client Socket.IO déduit automatiquement `<SOCKET_URL>/socket.io` (préfixe
+compris) : aucune configuration supplémentaire n'est nécessaire côté Flutter.
