@@ -23,7 +23,7 @@ from .enums import (
     TypeNotification,
     TypePreuve,
 )
-from .geo import Commissariat, Localisation, Province, Ville
+from .geo import Commissariat, Commune, Localisation, Province, Ville
 from .objet import Objet, Partage, TypeObjet
 from .preuve import Preuve
 from .security import TokenDenylist, VerificationToken
@@ -34,6 +34,7 @@ __all__ = [
     # geo
     "Province",
     "Ville",
+    "Commune",
     "Commissariat",
     "Localisation",
     # users / rbac

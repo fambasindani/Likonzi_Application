@@ -5,30 +5,30 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 
-import 'package:securite/components/bouton.dart';
-import 'package:securite/components/carte_alerte.dart';
-import 'package:securite/components/carte_commissariat.dart';
-import 'package:securite/components/carte_dossier.dart';
-import 'package:securite/components/carte_notification.dart';
-import 'package:securite/components/carte_objet.dart';
-import 'package:securite/models/alerte.dart';
-import 'package:securite/models/dossier.dart';
-import 'package:securite/models/geographie.dart';
-import 'package:securite/models/objet.dart';
-import 'package:securite/models/social.dart';
-import 'package:securite/models/utilisateur.dart';
-import 'package:securite/providers/alerte_provider.dart';
-import 'package:securite/providers/auth_provider.dart';
-import 'package:securite/providers/carte_provider.dart';
-import 'package:securite/providers/social_provider.dart';
-import 'package:securite/theme/theme.dart';
-import 'package:securite/components/liste.dart';
-import 'package:securite/views/accueil/accueil_view.dart';
-import 'package:securite/views/dossiers/dossiers_view.dart';
-import 'package:securite/views/alertes/alertes_view.dart';
-import 'package:securite/views/objets/mes_biens_view.dart';
-import 'package:securite/views/objets/objet_create_view.dart';
-import 'package:securite/views/objets/objet_detail_view.dart';
+import 'package:likonzi/components/bouton.dart';
+import 'package:likonzi/components/carte_alerte.dart';
+import 'package:likonzi/components/carte_commissariat.dart';
+import 'package:likonzi/components/carte_dossier.dart';
+import 'package:likonzi/components/carte_notification.dart';
+import 'package:likonzi/components/carte_objet.dart';
+import 'package:likonzi/models/alerte.dart';
+import 'package:likonzi/models/dossier.dart';
+import 'package:likonzi/models/geographie.dart';
+import 'package:likonzi/models/objet.dart';
+import 'package:likonzi/models/social.dart';
+import 'package:likonzi/models/utilisateur.dart';
+import 'package:likonzi/providers/alerte_provider.dart';
+import 'package:likonzi/providers/auth_provider.dart';
+import 'package:likonzi/providers/carte_provider.dart';
+import 'package:likonzi/providers/social_provider.dart';
+import 'package:likonzi/theme/theme.dart';
+import 'package:likonzi/components/liste.dart';
+import 'package:likonzi/views/accueil/accueil_view.dart';
+import 'package:likonzi/views/dossiers/dossiers_view.dart';
+import 'package:likonzi/views/alertes/alertes_view.dart';
+import 'package:likonzi/views/objets/mes_biens_view.dart';
+import 'package:likonzi/views/objets/objet_create_view.dart';
+import 'package:likonzi/views/objets/objet_detail_view.dart';
 
 /// Régressions d'interface relevées sur l'appareil :
 ///  1. « Voir tout » depuis l'accueil affichait une page rouge ;
@@ -46,7 +46,7 @@ void main() {
       envString: 'API_BASE_URL=http://localhost:1/api/v1\n'
           'SOCKET_URL=http://localhost:1\n'
           'MAP_PROVIDER=osm\n'
-          'APP_NOM=Sécurité RDC\n'
+          'APP_NOM=LIKONZI\n'
           'DEBUG_RESEAU=false\n'
           'PAR_PAGE=20\n',
     );

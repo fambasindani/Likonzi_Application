@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:securite/theme/couleurs.dart';
-import 'package:securite/utils/formatage.dart';
-import 'package:securite/utils/validations.dart';
+import 'package:likonzi/theme/couleurs.dart';
+import 'package:likonzi/utils/formatage.dart';
+import 'package:likonzi/utils/validations.dart';
 
 void main() {
   group('Validations', () {

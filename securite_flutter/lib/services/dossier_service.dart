@@ -190,6 +190,13 @@ class CommissariatService {
     return brut.map(Ville.brut).toList(growable: false);
   }
 
+  Future<List<Commune>> communes({int? idVille}) async {
+    final brut = await _liste('/communes', params: {
+      if (idVille != null) 'id_ville': idVille,
+    });
+    return brut.map(Commune.brut).toList(growable: false);
+  }
+
   Future<List<Commissariat>> commissariats({int? idProvince}) async {
     final brut = await _liste('/commissariats', params: {
       if (idProvince != null) 'id_province': idProvince,

@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:securite/models/alerte.dart';
-import 'package:securite/models/dossier.dart';
-import 'package:securite/models/reponse_api.dart';
-import 'package:securite/models/social.dart';
-import 'package:securite/models/utilisateur.dart';
+import 'package:likonzi/models/alerte.dart';
+import 'package:likonzi/models/dossier.dart';
+import 'package:likonzi/models/reponse_api.dart';
+import 'package:likonzi/models/social.dart';
+import 'package:likonzi/models/utilisateur.dart';
 
 void main() {
   group('Parsing JSON du backend', () {

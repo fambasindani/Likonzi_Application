@@ -1,8 +1,9 @@
 # Likonzi_Application
 
-Application mobile **Sécurité Sociale RDC** : citoyens et police dans la même
-application — alertes d'urgence, dossiers d'enquête, objets volés, preuves
-photo/vidéo, cartes OpenStreetMap, messagerie et notifications en temps réel.
+Application mobile **LIKONZI** (Sécurité Sociale RDC) : citoyens et police
+dans la même application — alertes d'urgence, dossiers d'enquête, objets volés,
+preuves photo/vidéo, cartes OpenStreetMap, messagerie et notifications en
+temps réel.
 
 ## Structure du dépôt
 

@@ -4,43 +4,44 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 
-import 'package:securite/models/alerte.dart';
-import 'package:securite/models/dossier.dart';
-import 'package:securite/models/utilisateur.dart';
-import 'package:securite/providers/alerte_provider.dart';
-import 'package:securite/providers/auth_provider.dart';
-import 'package:securite/providers/carte_provider.dart';
-import 'package:securite/providers/social_provider.dart';
-import 'package:securite/theme/theme.dart';
-import 'package:securite/views/accueil/accueil_view.dart';
-import 'package:securite/views/admin/audit_view.dart';
-import 'package:securite/views/admin/referentiels_view.dart';
-import 'package:securite/views/admin/utilisateurs_view.dart';
-import 'package:securite/views/alertes/alerte_create_view.dart';
-import 'package:securite/views/alertes/alerte_detail_view.dart';
-import 'package:securite/views/alertes/alertes_view.dart';
-import 'package:securite/views/auth/forgot_password_view.dart';
-import 'package:securite/views/auth/login_view.dart';
-import 'package:securite/views/auth/register_view.dart';
-import 'package:securite/views/boite/boite_view.dart';
-import 'package:securite/views/boite/conversation_view.dart';
-import 'package:securite/views/carte/carte_view.dart';
-import 'package:securite/views/carte/positions_view.dart';
-import 'package:securite/views/commissariats/commissariats_view.dart';
-import 'package:securite/views/dossiers/dossier_create_view.dart';
-import 'package:securite/views/dossiers/dossier_detail_view.dart';
-import 'package:securite/views/dossiers/dossiers_view.dart';
-import 'package:securite/views/dossiers/mes_interventions_view.dart';
-import 'package:securite/views/objets/objet_create_view.dart';
-import 'package:securite/views/objets/objets_view.dart';
-import 'package:securite/views/profil/apropos_view.dart';
-import 'package:securite/views/profil/changer_mdp_view.dart';
-import 'package:securite/views/profil/modifier_profil_view.dart';
-import 'package:securite/views/profil/profil_view.dart';
-import 'package:securite/views/profil/verification_view.dart';
-import 'package:securite/views/admin/administration_view.dart';
-import 'package:securite/views/objets/mes_biens_view.dart';
-import 'package:securite/views/objets/partages_view.dart';
+import 'package:likonzi/models/alerte.dart';
+import 'package:likonzi/models/dossier.dart';
+import 'package:likonzi/models/utilisateur.dart';
+import 'package:likonzi/providers/alerte_provider.dart';
+import 'package:likonzi/providers/auth_provider.dart';
+import 'package:likonzi/providers/carte_provider.dart';
+import 'package:likonzi/providers/social_provider.dart';
+import 'package:likonzi/theme/theme.dart';
+import 'package:likonzi/views/accueil/accueil_view.dart';
+import 'package:likonzi/views/admin/audit_view.dart';
+import 'package:likonzi/views/admin/geographie_view.dart';
+import 'package:likonzi/views/admin/referentiels_view.dart';
+import 'package:likonzi/views/admin/utilisateurs_view.dart';
+import 'package:likonzi/views/alertes/alerte_create_view.dart';
+import 'package:likonzi/views/alertes/alerte_detail_view.dart';
+import 'package:likonzi/views/alertes/alertes_view.dart';
+import 'package:likonzi/views/auth/forgot_password_view.dart';
+import 'package:likonzi/views/auth/login_view.dart';
+import 'package:likonzi/views/auth/register_view.dart';
+import 'package:likonzi/views/boite/boite_view.dart';
+import 'package:likonzi/views/boite/conversation_view.dart';
+import 'package:likonzi/views/carte/carte_view.dart';
+import 'package:likonzi/views/carte/positions_view.dart';
+import 'package:likonzi/views/commissariats/commissariats_view.dart';
+import 'package:likonzi/views/dossiers/dossier_create_view.dart';
+import 'package:likonzi/views/dossiers/dossier_detail_view.dart';
+import 'package:likonzi/views/dossiers/dossiers_view.dart';
+import 'package:likonzi/views/dossiers/mes_interventions_view.dart';
+import 'package:likonzi/views/objets/objet_create_view.dart';
+import 'package:likonzi/views/objets/objets_view.dart';
+import 'package:likonzi/views/profil/apropos_view.dart';
+import 'package:likonzi/views/profil/changer_mdp_view.dart';
+import 'package:likonzi/views/profil/modifier_profil_view.dart';
+import 'package:likonzi/views/profil/profil_view.dart';
+import 'package:likonzi/views/profil/verification_view.dart';
+import 'package:likonzi/views/admin/administration_view.dart';
+import 'package:likonzi/views/objets/mes_biens_view.dart';
+import 'package:likonzi/views/objets/partages_view.dart';
 
 /// Passe les écrans aux deux tailles de téléphone limites et remonte
 /// **tous** les débordements de taille (RenderFlex overflow) d'un coup.
@@ -65,7 +66,7 @@ void main() {
       envString: 'API_BASE_URL=http://localhost:1/api/v1\n'
           'SOCKET_URL=http://localhost:1\n'
           'MAP_PROVIDER=osm\n'
-          'APP_NOM=Sécurité RDC\n'
+          'APP_NOM=LIKONZI\n'
           'APP_SLOGAN=Protéger, alerter, intervenir\n'
           'DEBUG_RESEAU=false\n'
           'PAR_PAGE=20\n',
@@ -228,6 +229,7 @@ void main() {
       'À propos': () => const VueAPropos(),
       'Utilisateurs': () => const VueUtilisateurs(),
       'Référentiels': () => const VueReferentiels(),
+      'Géographie': () => const VueGeographie(),
       'Audit': () => const VueAudit(),
       'Administration': () => const VueAdministration(),
       'Mes biens': () => const VueMesBiens(),

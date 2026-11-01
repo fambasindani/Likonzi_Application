@@ -96,6 +96,25 @@ CREATE TABLE `villes` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================================
+-- 1bis. COMMUNES  (province -> ville -> commune -> commissariat)
+-- =====================================================================
+
+CREATE TABLE `communes` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id_ville` INT UNSIGNED NOT NULL,
+  `code` VARCHAR(20) NULL,
+  `nom` VARCHAR(100) NOT NULL,
+  `latitude` DECIMAL(10,7) NULL,
+  `longitude` DECIMAL(10,7) NULL,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_communes_ville_nom` (`id_ville`, `nom`),
+  KEY `idx_communes_nom` (`nom`),
+  CONSTRAINT `fk_communes_ville` FOREIGN KEY (`id_ville`) REFERENCES `villes` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================================
 -- 2. COMMISSARIATS
 -- =====================================================================
 
@@ -105,6 +124,7 @@ CREATE TABLE `commissariats` (
   `nom` VARCHAR(150) NOT NULL,
   `id_province` INT UNSIGNED NULL,
   `id_ville` INT UNSIGNED NULL,
+  `id_commune` INT UNSIGNED NULL,
   `adresse` VARCHAR(255) NULL,
   `telephone` VARCHAR(20) NULL,
   `email` VARCHAR(100) NULL,
@@ -119,11 +139,13 @@ CREATE TABLE `commissariats` (
   UNIQUE KEY `uk_commissariats_code` (`code`),
   KEY `idx_commissariats_province` (`id_province`),
   KEY `idx_commissariats_ville` (`id_ville`),
+  KEY `idx_commissariats_commune` (`id_commune`),
   KEY `idx_commissariats_responsable` (`responsable_id`),
   KEY `idx_commissariats_statut` (`statut`),
   KEY `idx_commissariats_geo` (`latitude`, `longitude`),
   CONSTRAINT `fk_commissariats_province` FOREIGN KEY (`id_province`) REFERENCES `provinces` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `fk_commissariats_ville` FOREIGN KEY (`id_ville`) REFERENCES `villes` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+  CONSTRAINT `fk_commissariats_ville` FOREIGN KEY (`id_ville`) REFERENCES `villes` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_commissariats_commune` FOREIGN KEY (`id_commune`) REFERENCES `communes` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================================
@@ -795,11 +817,7 @@ SELECT p.id, p.chef_lieu, NULL, NULL FROM `provinces` p WHERE p.chef_lieu IS NOT
 
 INSERT INTO `villes` (`id_province`, `nom`, `latitude`, `longitude`)
 SELECT p.id, v.ville_nom, v.lat, v.lon FROM (
-  SELECT 'KIN' AS pc, 'Limete' AS ville_nom, -4.3276000 AS lat, 15.3444000 AS lon UNION ALL
-  SELECT 'KIN', 'Ngaliema', -4.4347000, 15.2466000 UNION ALL
-  SELECT 'KIN', 'Kintambo', -4.3444000, 15.2955000 UNION ALL
-  SELECT 'KIN', 'Masina', -4.3417000, 15.4233000 UNION ALL
-  SELECT 'KWL', 'Kikwit', -5.0380000, 20.8590000 UNION ALL
+  SELECT 'KWL' AS pc, 'Kikwit' AS ville_nom, -5.0380000 AS lat, 20.8590000 AS lon UNION ALL
   SELECT 'HKT', 'Likasi', -10.9833333, 26.7333333 UNION ALL
   SELECT 'HKT', 'Kipushi', -11.7666667, 27.2500000 UNION ALL
   SELECT 'LUA', 'Likasi', -10.9833333, 26.7333333 UNION ALL
@@ -823,15 +841,15 @@ FROM `provinces` p JOIN `villes` v ON v.id_province = p.id AND v.nom = 'Kinshasa
 UNION ALL
 SELECT 'COM-KIN-002', 'Commissariat de Ngaliema', p.id, v.id,
        'Av. Kikwit, Ngaliema, Kinshasa', '+243 81 000 0002', 'kin2@police.cd', -4.4347000, 15.2466000, 1
-FROM `provinces` p JOIN `villes` v ON v.id_province = p.id AND v.nom = 'Ngaliema'
+FROM `provinces` p JOIN `villes` v ON v.id_province = p.id AND v.nom = 'Kinshasa'
 UNION ALL
 SELECT 'COM-KIN-003', 'Commissariat de Masina', p.id, v.id,
        'Av. de l’Aéroport, Masina, Kinshasa', '+243 81 000 0003', 'kin3@police.cd', -4.3417000, 15.4233333, 1
-FROM `provinces` p JOIN `villes` v ON v.id_province = p.id AND v.nom = 'Masina'
+FROM `provinces` p JOIN `villes` v ON v.id_province = p.id AND v.nom = 'Kinshasa'
 UNION ALL
 SELECT 'COM-KIN-004', 'Commissariat de Limete', p.id, v.id,
        'Av. Général Mobutu, Limete, Kinshasa', '+243 81 000 0004', 'kin4@police.cd', -4.3276000, 15.3444000, 1
-FROM `provinces` p JOIN `villes` v ON v.id_province = p.id AND v.nom = 'Limete'
+FROM `provinces` p JOIN `villes` v ON v.id_province = p.id AND v.nom = 'Kinshasa'
 UNION ALL
 SELECT 'COM-LUB-001', 'Commissariat Central de Lubumbashi', p.id, v.id,
        'Av. sentier, Lubumbashi', '+243 82 000 0001', 'lub1@police.cd', -11.6600000, 27.4800000, 1
@@ -856,6 +874,36 @@ UNION ALL
 SELECT 'COM-KIS-001', 'Commissariat Central de Kisangani', p.id, v.id,
        'Av. de la Libération, Kisangani', '+243 87 000 0001', 'kis1@police.cd', 0.5166667, 25.1833333, 1
 FROM `provinces` p JOIN `villes` v ON v.id_province = p.id AND v.nom = 'Kisangani';
+
+-- 18.3bis Communes de la ville de Kinshasa (24 communes officielles)
+INSERT INTO `communes` (`id_ville`, `nom`)
+SELECT v.id, n.nom
+FROM `villes` v
+JOIN `provinces` p ON p.id = v.id_province AND p.code = 'KIN'
+JOIN (
+  SELECT 'Bandalungwa' AS nom UNION ALL SELECT 'Barumbu' UNION ALL
+  SELECT 'Bumbu' UNION ALL SELECT 'Gombe' UNION ALL SELECT 'Kalamu' UNION ALL
+  SELECT 'Kasa-Vubu' UNION ALL SELECT 'Kimbanseke' UNION ALL
+  SELECT 'Kinshasa' UNION ALL SELECT 'Kintambo' UNION ALL SELECT 'Kisenso' UNION ALL
+  SELECT 'Lemba' UNION ALL SELECT 'Limete' UNION ALL SELECT 'Lingwala' UNION ALL
+  SELECT 'Makala' UNION ALL SELECT 'Maluku' UNION ALL SELECT 'Masina' UNION ALL
+  SELECT 'Matete' UNION ALL SELECT 'Mont-Ngafula' UNION ALL SELECT 'Ndjili' UNION ALL
+  SELECT 'Ngaba' UNION ALL SELECT 'Ngaliema' UNION ALL SELECT 'Ngiri-Ngiri' UNION ALL
+  SELECT 'Selembao' UNION ALL SELECT 'Wasa-Ndako'
+) n
+WHERE v.nom = 'Kinshasa'
+ON DUPLICATE KEY UPDATE `nom` = VALUES(`nom`);
+
+-- 18.3ter Rattachement des commissariats de Kinshasa à leur commune
+UPDATE `commissariats` c
+  JOIN `communes` m ON m.nom = CASE c.`code`
+        WHEN 'COM-KIN-001' THEN 'Gombe'
+        WHEN 'COM-KIN-002' THEN 'Ngaliema'
+        WHEN 'COM-KIN-003' THEN 'Masina'
+        WHEN 'COM-KIN-004' THEN 'Limete'
+      END
+   SET c.`id_commune` = m.`id`
+ WHERE c.`code` IN ('COM-KIN-001','COM-KIN-002','COM-KIN-003','COM-KIN-004');
 
 -- 18.4 Rôles
 INSERT INTO `roles` (`nom`, `description`) VALUES
@@ -897,6 +945,7 @@ INSERT INTO `permissions` (`code`, `module`, `description`) VALUES
   ('commissariats.gerer','commissariats','Gérer les commissariats'),
   ('geo.lire',          'geo',          'Consulter les localisations'),
   ('geo.proximite',     'geo',          'Recherche par proximité (alertes/commissariats)'),
+  ('geo.gerer',         'geo',          'Gérer les référentiels géographiques (provinces, villes, communes, commissariats)'),
   ('social.amis',       'social',       'Demander / répondre aux demandes d''amis'),
   ('social.messages',   'social',       'Envoyer / lire des messages'),
   ('notifications.lire','notifications','Consulter ses notifications'),

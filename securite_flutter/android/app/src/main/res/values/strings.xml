@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Nom de l'application affiche par Android (lanceur, taches recentes,
+         parametres systeme). Une seule source de verite : le manifeste et les
+         plugins (notifications, partage) le lisent ici. -->
+    <string name="app_name">LIKONZI</string>
+</resources>

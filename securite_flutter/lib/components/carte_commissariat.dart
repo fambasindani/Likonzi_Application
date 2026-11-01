@@ -87,11 +87,13 @@ class CarteCommissariat extends StatelessWidget {
                 ],
               ),
             ),
-          if (c.ville != null || c.province != null)
+          if (c.commune != null || c.ville != null || c.province != null)
             Padding(
               padding: const EdgeInsets.only(top: 6),
               child: Text(
-                [c.ville, c.province].where((e) => e != null).join(', '),
+                [c.commune, c.ville, c.province]
+                    .where((e) => e != null && e.isNotEmpty)
+                    .join(' — '),
                 style: const TextStyle(
                   fontSize: 12.5,
                   color: AppCouleurs.texteSecondaire,

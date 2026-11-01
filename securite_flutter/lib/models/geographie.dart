@@ -47,6 +47,46 @@ class Ville {
       );
 }
 
+/// Commune : sous-division d'une ville (ex. Limete, Masina à Kinshasa).
+class Commune {
+  Commune({
+    required this.id,
+    required this.idVille,
+    required this.nom,
+    this.code,
+    this.latitude,
+    this.longitude,
+    this.ville,
+    this.province,
+  });
+
+  final int id;
+  final int idVille;
+  final String nom;
+  final String? code;
+  final double? latitude;
+  final double? longitude;
+  final String? ville;
+  final String? province;
+
+  factory Commune.brut(Map<String, dynamic> j) => Commune(
+        id: JsonAide.entierDefaut(j, 'id'),
+        idVille: JsonAide.entierDefaut(j, 'id_ville'),
+        nom: JsonAide.texteDefaut(j, 'nom'),
+        code: JsonAide.texte(j, 'code'),
+        latitude: JsonAide.decimal(j, 'latitude'),
+        longitude: JsonAide.decimal(j, 'longitude'),
+        ville: JsonAide.texte(j, 'ville'),
+        province: JsonAide.texte(j, 'province'),
+      );
+
+  /// Libellé hiérarchique : « Kinshasa — Limete ».
+  String get libelleHierarchie {
+    final parents = [ville, province].where((n) => n != null && n.isNotEmpty);
+    return parents.isEmpty ? nom : '${parents.join(' — ')} — $nom';
+  }
+}
+
 /// Commissariat de police.
 class Commissariat {
   Commissariat({
@@ -60,8 +100,10 @@ class Commissariat {
     this.longitude,
     this.idProvince,
     this.idVille,
+    this.idCommune,
     this.province,
     this.ville,
+    this.commune,
     this.statut = true,
     this.responsableId,
     this.distanceKm,
@@ -77,8 +119,10 @@ class Commissariat {
   final double? longitude;
   final int? idProvince;
   final int? idVille;
+  final int? idCommune;
   final String? province;
   final String? ville;
+  final String? commune;
   final bool statut;
   final int? responsableId;
 
@@ -96,8 +140,10 @@ class Commissariat {
         longitude: JsonAide.decimal(j, 'longitude'),
         idProvince: JsonAide.entier(j, 'id_province'),
         idVille: JsonAide.entier(j, 'id_ville'),
+        idCommune: JsonAide.entier(j, 'id_commune'),
         province: JsonAide.texte(j, 'province'),
         ville: JsonAide.texte(j, 'ville'),
+        commune: JsonAide.texte(j, 'commune'),
         statut: JsonAide.booleen(j, 'statut'),
         responsableId: JsonAide.entier(j, 'responsable_id'),
         distanceKm: JsonAide.decimal(j, 'distance_km'),

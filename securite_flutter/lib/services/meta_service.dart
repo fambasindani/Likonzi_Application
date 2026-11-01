@@ -64,8 +64,11 @@ class MetaService {
     );
   }
 
-  Future<List<Map<String, dynamic>>> _liste(String chemin) async {
-    final corps = await _api.get(chemin);
+  Future<List<Map<String, dynamic>>> _liste(
+    String chemin, {
+    Map<String, dynamic>? params,
+  }) async {
+    final corps = await _api.get(chemin, params: params);
     final data = corps is Map<String, dynamic> ? corps['data'] : null;
     if (data is! List) return [];
     return data
@@ -73,4 +76,78 @@ class MetaService {
         .map((e) => Map<String, dynamic>.from(e))
         .toList(growable: false);
   }
+
+  // ----------------------------------------------------- référentiel géographique
+
+  /// `GET /provinces` — 26 provinces de la RDC.
+  Future<List<Map<String, dynamic>>> provinces() => _liste('/provinces');
+
+  /// `GET /villes` — villes, filtrables par province.
+  Future<List<Map<String, dynamic>>> villes({int? idProvince}) => _liste(
+        '/villes',
+        params: {if (idProvince != null) 'id_province': idProvince},
+      );
+
+  /// `GET /communes` — communes d'une ville (`?id_ville=`).
+  Future<List<Map<String, dynamic>>> communes({int? idVille}) => _liste(
+        '/communes',
+        params: {if (idVille != null) 'id_ville': idVille},
+      );
+
+  /// `GET /commissariats` — commissariats actifs (permission
+  /// `commissariats.lire`).
+  Future<List<Map<String, dynamic>>> commissariats({int? idProvince}) => _liste(
+        '/commissariats',
+        params: {if (idProvince != null) 'id_province': idProvince},
+      );
+
+  Future<Map<String, dynamic>> _ecrire(
+    String methode,
+    String chemin, {
+    Map<String, dynamic>? corps,
+  }) async {
+    final dynamic reponse;
+    switch (methode) {
+      case 'POST':
+        reponse = await _api.post(chemin, data: corps);
+      case 'PATCH':
+        reponse = await _api.patch(chemin, data: corps);
+      default:
+        await _api.delete(chemin);
+        return const {};
+    }
+    final data = reponse is Map<String, dynamic> ? reponse['data'] : null;
+    return data is Map<String, dynamic> ? data : const {};
+  }
+
+  Future<Map<String, dynamic>> creerProvince(Map<String, dynamic> corps) =>
+      _ecrire('POST', '/provinces', corps: corps);
+  Future<Map<String, dynamic>> majProvince(int id, Map<String, dynamic> corps) =>
+      _ecrire('PATCH', '/provinces/$id', corps: corps);
+  Future<void> supprimerProvince(int id) =>
+      _ecrire('DELETE', '/provinces/$id').then((_) {});
+
+  Future<Map<String, dynamic>> creerVille(Map<String, dynamic> corps) =>
+      _ecrire('POST', '/villes', corps: corps);
+  Future<Map<String, dynamic>> majVille(int id, Map<String, dynamic> corps) =>
+      _ecrire('PATCH', '/villes/$id', corps: corps);
+  Future<void> supprimerVille(int id) =>
+      _ecrire('DELETE', '/villes/$id').then((_) {});
+
+  Future<Map<String, dynamic>> creerCommune(Map<String, dynamic> corps) =>
+      _ecrire('POST', '/communes', corps: corps);
+  Future<Map<String, dynamic>> majCommune(int id, Map<String, dynamic> corps) =>
+      _ecrire('PATCH', '/communes/$id', corps: corps);
+  Future<void> supprimerCommune(int id) =>
+      _ecrire('DELETE', '/communes/$id').then((_) {});
+
+  Future<Map<String, dynamic>> creerCommissariat(Map<String, dynamic> corps) =>
+      _ecrire('POST', '/commissariats', corps: corps);
+  Future<Map<String, dynamic>> majCommissariat(
+    int id,
+    Map<String, dynamic> corps,
+  ) =>
+      _ecrire('PATCH', '/commissariats/$id', corps: corps);
+  Future<void> supprimerCommissariat(int id) =>
+      _ecrire('DELETE', '/commissariats/$id').then((_) {});
 }

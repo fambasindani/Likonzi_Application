@@ -28,8 +28,10 @@ class _VueCommissariatsState extends State<VueCommissariats> {
   List<Commissariat> _elements = [];
   List<Province> _provinces = [];
   List<Ville> _villes = [];
+  List<Commune> _communes = [];
   int? _idProvince;
   int? _idVille;
+  int? _idCommune;
   bool _chargement = true;
   String? _erreur;
   bool _autourDeMoi = true;
@@ -41,7 +43,7 @@ class _VueCommissariatsState extends State<VueCommissariats> {
   }
 
   Future<void> _demarrer() async {
-    await _chargerProvinces();
+    await Future.wait([_chargerProvinces(), _chargerCommunes()]);
     await _charger();
   }
 
@@ -53,6 +55,22 @@ class _VueCommissariatsState extends State<VueCommissariats> {
     } catch (_) {
       // Référentiel indisponible : les filtres resteront masqués.
     }
+  }
+
+  Future<void> _chargerCommunes() async {
+    try {
+      final communes = await CommissariatService.instance.communes();
+      if (!mounted) return;
+      setState(() => _communes = communes);
+    } catch (_) {
+      // Référentiel indisponible : le filtre commune reste masqué.
+    }
+  }
+
+  /// Communes proposées : celles de la ville choisie, sinon toutes.
+  List<Commune> get _communesFiltrees {
+    if (_idVille == null) return _communes;
+    return _communes.where((c) => c.idVille == _idVille).toList(growable: false);
   }
 
   Future<void> _chargerVilles(int? idProvince) async {
@@ -100,6 +118,11 @@ class _VueCommissariatsState extends State<VueCommissariats> {
         _elements = _idVille == null
             ? liste
             : liste.where((c) => c.idVille == _idVille).toList(growable: false);
+        if (_idCommune != null) {
+          _elements = _elements
+              .where((c) => c.idCommune == _idCommune)
+              .toList(growable: false);
+        }
       }
     } on ExceptionApi catch (e) {
       _erreur = e.message;
@@ -217,6 +240,7 @@ class _VueCommissariatsState extends State<VueCommissariats> {
                 if (_autourDeMoi) {
                   _idProvince = null;
                   _idVille = null;
+                  _idCommune = null;
                 }
               });
               _charger();
@@ -246,6 +270,7 @@ class _VueCommissariatsState extends State<VueCommissariats> {
                         setState(() {
                           _idProvince = v;
                           _idVille = null;
+                          _idCommune = null;
                           _autourDeMoi = false;
                         });
                         _chargerVilles(v);
@@ -266,13 +291,48 @@ class _VueCommissariatsState extends State<VueCommissariats> {
                             OptionSelecteur(valeur: v.id, libelle: v.nom),
                         ],
                         onChanged: (v) {
-                          setState(() => _idVille = v);
+                          setState(() {
+                            _idVille = v;
+                            // Une commune d'une autre ville ne peut rester filtree.
+                            if (_idCommune != null) {
+                              final encoreValide = _communes.any(
+                                (c) => c.id == _idCommune && c.idVille == v,
+                              );
+                              if (!encoreValide) _idCommune = null;
+                            }
+                          });
                           _charger();
                         },
                       ),
                     ),
                   ],
                 ],
+              ),
+            ),
+          if (_communes.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+              child: Selecteur<int>(
+                libelle: 'Commune',
+                valeur: _idCommune,
+                hint: 'Toutes',
+                icone: Icons.map_outlined,
+                options: [
+                  for (final c in _communesFiltrees)
+                    OptionSelecteur(
+                      valeur: c.id,
+                      libelle: _idVille == null && c.ville != null
+                          ? '${c.nom} (${c.ville})'
+                          : c.nom,
+                    ),
+                ],
+                onChanged: (v) {
+                  setState(() {
+                    _idCommune = v;
+                    if (v != null) _autourDeMoi = false;
+                  });
+                  _charger();
+                },
               ),
             ),
           Expanded(child: _corps()),

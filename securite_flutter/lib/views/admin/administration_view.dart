@@ -6,6 +6,7 @@ import '../../components/liste.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/couleurs.dart';
 import 'audit_view.dart';
+import 'geographie_view.dart';
 import 'referentiels_view.dart';
 import 'utilisateurs_view.dart';
 import '../../components/avatar.dart';
@@ -40,6 +41,17 @@ class VueAdministration extends StatelessWidget {
           chemin: '/referentiels',
           vue: const VueReferentiels(),
           badge: 'rbac.gerer',
+        ),
+      if (auth.aPermission('geo.gerer'))
+        _EntreeAdmin(
+          icone: Icons.public,
+          couleur: AppCouleurs.bleuNuit,
+          titre: 'Géographie & commissariats',
+          sousTitre:
+              'Provinces → villes → communes → commissariats, avec localisation GPS',
+          chemin: '/geographie',
+          vue: const VueGeographie(),
+          badge: 'geo.gerer',
         ),
       if (auth.aPermission('audit.lire'))
         _EntreeAdmin(

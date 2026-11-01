@@ -165,7 +165,8 @@ check("citoyen -> GET /permissions = 403 (rbac.gerer)", r.status_code == 403, st
 
 r = C.get(f"{PREFIX}/commissariats", headers={"Authorization": f"Bearer {ADMIN_TOKEN}"})
 j = json_of(r)
-check("10 commissariats", len(j.get("data", [])) == 10, str(len(j.get("data", []))))
+check("au moins 10 commissariats (jeu de depart)",
+      len(j.get("data", [])) >= 10, str(len(j.get("data", []))))
 
 # ------------------------------------------------------------------ 12. mise à jour profil
 r = C.patch(
