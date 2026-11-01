@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 from datetime import timedelta
 from typing import ClassVar
+from urllib.parse import quote
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 PROJECT_DIR = os.path.abspath(os.path.join(BASE_DIR, os.pardir))
@@ -36,8 +37,12 @@ class Config:
     DB_NAME = os.getenv("DB_NAME", "securite_sociale_v2")
     DB_CHARSET = os.getenv("DB_CHARSET", "utf8mb4")
 
+    # Les identifiants sont encodés pour l'URL : un mot de passe contenant
+    # `@`, `:` ou `/` (fréquent chez les hébergeurs) ferait basculer l'hôte —
+    # ex. `...:Famba@Ngoy@host/...` -> hôte lu comme `Ngoy@host`.
     SQLALCHEMY_DATABASE_URI = (
-        f"mysql+{DB_DRIVER}://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+        f"mysql+{DB_DRIVER}://{quote(DB_USER, safe='')}:{quote(DB_PASSWORD, safe='')}"
+        f"@{DB_HOST}:{DB_PORT}/{DB_NAME}"
         f"?charset={DB_CHARSET}"
     )
     SQLALCHEMY_ENGINE_OPTIONS: ClassVar[dict] = {
