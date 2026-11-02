@@ -176,6 +176,7 @@ class Partage {
     this.proprietaireNom,
     this.proprietairePrenom,
     this.proprietaireAvatar,
+    this.proprietaireTel,
   });
 
   final int id;
@@ -189,6 +190,7 @@ class Partage {
   final String? proprietaireNom;
   final String? proprietairePrenom;
   final String? proprietaireAvatar;
+  final String? proprietaireTel;
 
   factory Partage.brut(Map<String, dynamic> j) {
     final objetJson = j['objet'] is Map<String, dynamic> ? j['objet'] as Map<String, dynamic> : null;
@@ -207,6 +209,7 @@ class Partage {
       proprietaireNom: JsonAide.texte(proprio, 'nom'),
       proprietairePrenom: JsonAide.texte(proprio, 'prenom'),
       proprietaireAvatar: JsonAide.texte(proprio, 'avatar'),
+      proprietaireTel: JsonAide.texte(proprio, 'telephone'),
     );
   }
 

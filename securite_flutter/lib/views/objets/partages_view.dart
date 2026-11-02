@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../components/avatar.dart';
 import '../../components/badge.dart';
@@ -89,6 +90,20 @@ class _VuePartagesState extends State<VuePartages> {
       montrerSucces(context, 'Partage retiré.');
     } on ExceptionApi catch (e) {
       if (mounted) montrerErreur(context, e);
+    }
+  }
+
+  /// Appelle l'expéditeur du partage (photo + numéro renvoyés par l'API).
+  Future<void> _appeler(Partage p) async {
+    final numero = (p.proprietaireTel ?? '').replaceAll(RegExp(r'[^\d+]'), '');
+    if (numero.isEmpty) {
+      montrerErreur(context, 'Aucun numéro renseigné pour cet expéditeur.');
+      return;
+    }
+    try {
+      await launchUrl(Uri(scheme: 'tel', path: numero));
+    } catch (_) {
+      if (mounted) montrerErreur(context, 'Impossible de passer l’appel.');
     }
   }
 
@@ -184,6 +199,16 @@ class _VuePartagesState extends State<VuePartages> {
                                           color: AppCouleurs.rouge,
                                           shape: BoxShape.circle,
                                         ),
+                                      ),
+                                    if ((p.proprietaireTel ?? '')
+                                        .replaceAll(RegExp(r'[^\d+]'), '')
+                                        .isNotEmpty)
+                                      IconButton(
+                                        tooltip:
+                                            'Appeler ${p.proprietaire.isEmpty ? 'l\'expéditeur' : p.proprietaire}',
+                                        icon: const Icon(Icons.call_outlined,
+                                            size: 19, color: AppCouleurs.vert),
+                                        onPressed: () => _appeler(p),
                                       ),
                                     IconButton(
                                       tooltip: 'Retirer',

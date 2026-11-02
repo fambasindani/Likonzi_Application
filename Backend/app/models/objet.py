@@ -149,6 +149,7 @@ class Partage(db.Model, TimestampMixin):
                     "nom": self.proprietaire.nom,
                     "prenom": self.proprietaire.prenom,
                     "avatar": self.proprietaire.avatar,
+                    "telephone": self.proprietaire.telephone,
                 }
                 if self.proprietaire
                 else None

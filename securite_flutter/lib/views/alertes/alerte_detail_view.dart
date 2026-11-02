@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../components/avatar.dart';
 import '../../components/badge.dart';
@@ -388,6 +389,8 @@ class _VueDetailAlerteState extends State<VueDetailAlerte> {
                     nom: _alerte.emetteur.isNotEmpty ? _alerte.emetteur : '—',
                     fonction: _alerte.emetteurTel ?? 'Émetteur',
                     nomPrenom: (_alerte.emetteurNom, _alerte.emetteurPrenom),
+                    url: _alerte.emetteurAvatar,
+                    telephone: _alerte.emetteurTel,
                     icone: Icons.person_outline,
                   ),
                   const Divider(height: 18),
@@ -531,12 +534,31 @@ class _LigneActeur extends StatelessWidget {
     required this.fonction,
     required this.icone,
     this.nomPrenom,
+    this.url,
+    this.telephone,
   });
 
   final String nom;
   final String fonction;
   final IconData icone;
   final (String?, String?)? nomPrenom;
+
+  /// Photo réelle de l'émetteur (sinon initiales).
+  final String? url;
+
+  /// Numéro affiché + bouton d'appel.
+  final String? telephone;
+
+  Future<void> _appeler() async {
+    final numero = (telephone ?? '').replaceAll(RegExp(r'[^\d+]'), '');
+    if (numero.isEmpty) return;
+    final uri = Uri(scheme: 'tel', path: numero);
+    try {
+      await launchUrl(uri);
+    } catch (_) {
+      // Aucune application d'appel sur l'appareil.
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -546,6 +568,7 @@ class _LigneActeur extends StatelessWidget {
           AvatarUtilisateur.noms(
             nom: nomPrenom!.$1,
             prenom: nomPrenom!.$2,
+            url: url,
             taille: 38,
           )
         else
@@ -568,6 +591,17 @@ class _LigneActeur extends StatelessWidget {
             ],
           ),
         ),
+        if (telephone != null && telephone!.replaceAll(RegExp(r'[^\d+]'), '').isNotEmpty)
+          IconButton(
+            tooltip: 'Appeler $nom',
+            onPressed: _appeler,
+            icon: const Icon(Icons.call_outlined, size: 21),
+            color: AppCouleurs.vert,
+            style: IconButton.styleFrom(
+              backgroundColor: AppCouleurs.vertPastel,
+              padding: const EdgeInsets.all(8),
+            ),
+          ),
       ],
     );
   }

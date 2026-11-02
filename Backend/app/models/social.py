@@ -132,6 +132,18 @@ class Note(db.Model, TimestampMixin):
             "messages": self.messages,
             "lu": bool(self.lu),
             "created_at": self.created_at.isoformat() if self.created_at else None,
+            # Identité complète de l'expéditeur (photo + appel possibles)
+            "emetteur": (
+                {
+                    "id": self.emetteur.id,
+                    "nom": self.emetteur.nom,
+                    "prenom": self.emetteur.prenom,
+                    "avatar": self.emetteur.avatar,
+                    "telephone": self.emetteur.telephone,
+                }
+                if self.emetteur
+                else None
+            ),
         }
 
 

@@ -69,6 +69,10 @@ class Message {
     required this.contenu,
     required this.lu,
     this.dateEnvoi,
+    this.nomExpediteur,
+    this.prenomExpediteur,
+    this.avatarExpediteur,
+    this.telephoneExpediteur,
   });
 
   final int id;
@@ -78,14 +82,32 @@ class Message {
   final bool lu;
   final DateTime? dateEnvoi;
 
-  factory Message.brut(Map<String, dynamic> j) => Message(
-        id: JsonAide.entierDefaut(j, 'id'),
-        idDestinataire: JsonAide.entierDefaut(j, 'id_rec'),
-        idExpediteur: JsonAide.entierDefaut(j, 'id_sender'),
-        contenu: JsonAide.texteDefaut(j, 'messages'),
-        lu: JsonAide.booleen(j, 'lu'),
-        dateEnvoi: JsonAide.date(j, 'created_at'),
-      );
+  /// Identité de l'émetteur (photo + appel) renvoyée par le backend.
+  final String? nomExpediteur;
+  final String? prenomExpediteur;
+  final String? avatarExpediteur;
+  final String? telephoneExpediteur;
+
+  factory Message.brut(Map<String, dynamic> j) {
+    final expediteur = JsonAide.objet(j, 'emetteur');
+    return Message(
+      id: JsonAide.entierDefaut(j, 'id'),
+      idDestinataire: JsonAide.entierDefaut(j, 'id_rec'),
+      idExpediteur: JsonAide.entierDefaut(j, 'id_sender'),
+      contenu: JsonAide.texteDefaut(j, 'messages'),
+      lu: JsonAide.booleen(j, 'lu'),
+      dateEnvoi: JsonAide.date(j, 'created_at'),
+      nomExpediteur: JsonAide.texte(expediteur, 'nom'),
+      prenomExpediteur: JsonAide.texte(expediteur, 'prenom'),
+      avatarExpediteur: JsonAide.texte(expediteur, 'avatar'),
+      telephoneExpediteur: JsonAide.texte(expediteur, 'telephone'),
+    );
+  }
+
+  /// Nom complet de l'émetteur.
+  String get nomExpediteurAffiche => [nomExpediteur, prenomExpediteur]
+      .where((e) => e != null && e.isNotEmpty)
+      .join(' ');
 }
 
 /// Notification applicative.

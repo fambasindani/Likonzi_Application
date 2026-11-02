@@ -57,6 +57,7 @@ class Alerte {
     this.emetteurNom,
     this.emetteurPrenom,
     this.emetteurTel,
+    this.emetteurAvatar,
     this.commissariatNom,
     this.policierNom,
     this.policierPrenom,
@@ -86,6 +87,7 @@ class Alerte {
   final String? emetteurNom;
   final String? emetteurPrenom;
   final String? emetteurTel;
+  final String? emetteurAvatar;
   final String? commissariatNom;
   final String? policierNom;
   final String? policierPrenom;
@@ -118,6 +120,7 @@ class Alerte {
       emetteurNom: JsonAide.texte(emetteur, 'nom') ?? JsonAide.texte(j, 'emetteur_nom'),
       emetteurPrenom: JsonAide.texte(emetteur, 'prenom') ?? JsonAide.texte(j, 'emetteur_prenom'),
       emetteurTel: JsonAide.texte(emetteur, 'telephone') ?? JsonAide.texte(j, 'emetteur_tel'),
+      emetteurAvatar: JsonAide.texte(emetteur, 'avatar'),
       commissariatNom: JsonAide.texte(j, 'commissariat_nom'),
       policierNom: JsonAide.texte(policier, 'nom') ?? JsonAide.texte(j, 'policier_nom'),
       policierPrenom: JsonAide.texte(policier, 'prenom') ?? JsonAide.texte(j, 'policier_prenom'),
