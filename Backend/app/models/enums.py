@@ -133,6 +133,7 @@ class TypeNotification(StrEnum):
     CAS_MAJ = "cas_maj"
     PREUVE_AJOUTEE = "preuve_ajoutee"
     OBJET_RETROUVE = "objet_retrouve"
+    SOS = "sos"
 
 
 class EntiteNotification(StrEnum):

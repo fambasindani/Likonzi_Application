@@ -14,6 +14,7 @@ def register_blueprints(app) -> None:
     from .partages import partages_bp
     from .preuves import preuves_bp
     from .social import social_bp
+    from .sos import sos_bp
     from .users import users_bp
 
     app.register_blueprint(auth_bp, url_prefix=f"{API_PREFIX}/auth")
@@ -30,6 +31,7 @@ def register_blueprints(app) -> None:
     # Transversal
     app.register_blueprint(geo_bp, url_prefix=API_PREFIX)
     app.register_blueprint(social_bp, url_prefix=API_PREFIX)
+    app.register_blueprint(sos_bp, url_prefix=API_PREFIX)
 
     # Référentiels / santé / audit
     app.register_blueprint(meta_bp, url_prefix=API_PREFIX)

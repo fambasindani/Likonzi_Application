@@ -56,6 +56,11 @@ def create_app(config_name: str | None = None) -> Flask:
 
     enregistrer_handlers(app)
 
+    # Veille SOS : le compte à rebours vit côté serveur (démarrage ignoré en tests).
+    from .services.sos_service import demarrer_veille
+
+    demarrer_veille(app)
+
     # Images historiques servies à l'emplacement attendu par l'application mobile.
     @app.get("/api/static/<path:filename>")
     def _static_legacy(filename: str):

@@ -15,7 +15,13 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 BACKEND = os.path.dirname(HERE)
 
-SUITES = ("smoke_test.py", "test_metier.py", "test_referentiel_geo.py", "test_temps_reel.py")
+SUITES = (
+    "smoke_test.py",
+    "test_metier.py",
+    "test_referentiel_geo.py",
+    "test_temps_reel.py",
+    "test_sos.py",
+)
 
 
 def _lancer(script: str) -> tuple[int, str]:
@@ -51,6 +57,12 @@ def test_referentiel_geographique() -> None:
 def test_temps_reel_et_rate_limit() -> None:
     code, sortie = _lancer("test_temps_reel.py")
     assert code == 0, f"Échec de test_temps_reel.py\n{sortie[-4000:]}"
+
+
+def test_sos_minute_de_grace() -> None:
+    code, sortie = _lancer("test_sos.py")
+    assert code == 0, f"Échec de test_sos.py\n{sortie[-4000:]}"
+    assert "  ECHEC" not in sortie, f"Vérifications en échec :\n{sortie}"
 
 
 def test_lint_propre() -> None:

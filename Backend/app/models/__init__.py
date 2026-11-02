@@ -28,6 +28,7 @@ from .objet import Objet, Partage, TypeObjet
 from .preuve import Preuve
 from .security import TokenDenylist, VerificationToken
 from .social import Demande, Note, Notification
+from .sos import Sos
 from .user import Permission, Role, RolePermission, User, UserRole
 
 __all__ = [
@@ -62,6 +63,8 @@ __all__ = [
     "Demande",
     "Note",
     "Notification",
+    # sos
+    "Sos",
     # audit
     "AuditLog",
     # mixins
