@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -11,6 +11,7 @@ import 'package:likonzi/providers/alerte_provider.dart';
 import 'package:likonzi/providers/auth_provider.dart';
 import 'package:likonzi/providers/carte_provider.dart';
 import 'package:likonzi/providers/social_provider.dart';
+import 'package:likonzi/providers/sos_provider.dart';
 import 'package:likonzi/theme/theme.dart';
 import 'package:likonzi/views/accueil/accueil_view.dart';
 import 'package:likonzi/views/admin/audit_view.dart';
@@ -165,6 +166,7 @@ void main() {
           ChangeNotifierProvider(create: (_) => AlerteProvider()),
           ChangeNotifierProvider(create: (_) => SocialProvider()),
           ChangeNotifierProvider(create: (_) => CarteProvider()),
+          ChangeNotifierProvider(create: (_) => SosProvider()),
         ],
         child: MaterialApp(
           debugShowCheckedModeBanner: false,

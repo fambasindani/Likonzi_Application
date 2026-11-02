@@ -97,6 +97,10 @@ class SocketService {
       'dossier_ouvert',
       'dossier_mis_a_jour',
       'intervention_enregistree',
+      'sos',
+      'sos_intermediaire',
+      'sos_envoye',
+      'sos_cloture',
       'ping_client',
     ];
     for (final nom in evenements) {

@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'providers/alerte_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/carte_provider.dart';
+import 'providers/sos_provider.dart';
 import 'providers/social_provider.dart';
 import 'services/config_service.dart';
 import 'theme/theme.dart';
@@ -33,6 +34,7 @@ class AppSecurite extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AlerteProvider()),
         ChangeNotifierProvider(create: (_) => SocialProvider()),
         ChangeNotifierProvider(create: (_) => CarteProvider()),
+        ChangeNotifierProvider(create: (_) => SosProvider()),
       ],
       child: MaterialApp(
         title: ConfigService.nomApp,

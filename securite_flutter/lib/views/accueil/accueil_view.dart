@@ -8,6 +8,7 @@ import '../../components/carte_conteneur.dart';
 import '../../components/liste.dart';
 import '../../providers/alerte_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/sos_provider.dart';
 import '../../providers/social_provider.dart';
 import '../../theme/couleurs.dart';
 import '../../utils/formatage.dart';
@@ -23,6 +24,7 @@ import '../admin/administration_view.dart';
 import '../objets/mes_biens_view.dart';
 import '../objets/partages_view.dart';
 import '../dossiers/dossiers_view.dart';
+import '../sos/sos_view.dart';
 
 /// Tableau de bord : alertes, compteurs, raccourcis.
 class VueAccueil extends StatefulWidget {
@@ -40,6 +42,7 @@ class _VueAccueilState extends State<VueAccueil> {
       if (!mounted) return;
       await context.read<AlerteProvider>().charger(forcer: true);
       if (mounted) await context.read<SocialProvider>().rafraichirCompteurs();
+      if (mounted) await context.read<SosProvider>().rafraichir();
     });
   }
 
@@ -55,6 +58,7 @@ class _VueAccueilState extends State<VueAccueil> {
     final auth = context.watch<AuthProvider>();
     final alertes = context.watch<AlerteProvider>();
     final social = context.watch<SocialProvider>();
+    final sos = context.watch<SosProvider>();
     final utilisateur = auth.utilisateur;
 
     return Scaffold(
@@ -122,6 +126,18 @@ class _VueAccueilState extends State<VueAccueil> {
                     couleur: AppCouleurs.orange,
                   ),
                 ],
+              ),
+            ),
+
+            // ------------------------------------------------------------- SOS
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+              child: _BanniereSos(
+                actif: sos.actif,
+                minuteur: sos.enCours ? sos.minuteur : null,
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const VueSos()),
+                ),
               ),
             ),
 
@@ -379,6 +395,94 @@ class _VueAccueilState extends State<VueAccueil> {
 }
 
 const configSloganTexte = 'Protéger, alerter, intervenir.';
+
+/// Bandeau rouge d'appel au SOS : toujours visible sur l'accueil.
+class _BanniereSos extends StatelessWidget {
+  const _BanniereSos({required this.actif, required this.onTap, this.minuteur});
+
+  final bool actif;
+  final String? minuteur;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Ink(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: actif
+                  ? const [Color(0xFFB30000), Color(0xFFFF0000)]
+                  : const [Color(0xFFFF0000), Color(0xFFD40000)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: AppCouleurs.rouge.withValues(alpha: 0.35),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  actif ? Icons.timer_outlined : Icons.sos_outlined,
+                  color: AppCouleurs.blanc,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      actif ? 'SOS EN COURS' : 'SOS URGENCE',
+                      style: const TextStyle(
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.4,
+                        color: AppCouleurs.blanc,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      actif
+                          ? (minuteur != null
+                              ? 'Envoi automatique dans $minuteur — appuyez pour gérer'
+                              : 'Message envoyé — appuyez pour lever le SOS')
+                          : 'Alertez vos amis et la police en un geste',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: Colors.white.withValues(alpha: 0.92),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: Colors.white70, size: 26),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _Statistique extends StatelessWidget {
   const _Statistique({
