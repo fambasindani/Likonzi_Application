@@ -55,9 +55,12 @@ class Alerte {
     this.typeLibelle,
     this.emetteurId,
     this.emetteurNom,
+    this.emetteurPostnom,
     this.emetteurPrenom,
     this.emetteurTel,
     this.emetteurAvatar,
+    this.emetteurMatricule,
+    this.emetteursRoles = const [],
     this.commissariatNom,
     this.policierNom,
     this.policierPrenom,
@@ -85,9 +88,12 @@ class Alerte {
   final String? typeLibelle;
   final int? emetteurId;
   final String? emetteurNom;
+  final String? emetteurPostnom;
   final String? emetteurPrenom;
   final String? emetteurTel;
   final String? emetteurAvatar;
+  final String? emetteurMatricule;
+  final List<String> emetteursRoles;
   final String? commissariatNom;
   final String? policierNom;
   final String? policierPrenom;
@@ -118,9 +124,14 @@ class Alerte {
       typeLibelle: JsonAide.texte(type, 'contenu') ?? JsonAide.texte(j, 'type_libelle'),
       emetteurId: JsonAide.entier(emetteur, 'id') ?? JsonAide.entier(j, 'id_emetteur'),
       emetteurNom: JsonAide.texte(emetteur, 'nom') ?? JsonAide.texte(j, 'emetteur_nom'),
+      emetteurPostnom: JsonAide.texte(emetteur, 'postnom') ?? JsonAide.texte(j, 'emetteur_postnom'),
       emetteurPrenom: JsonAide.texte(emetteur, 'prenom') ?? JsonAide.texte(j, 'emetteur_prenom'),
       emetteurTel: JsonAide.texte(emetteur, 'telephone') ?? JsonAide.texte(j, 'emetteur_tel'),
       emetteurAvatar: JsonAide.texte(emetteur, 'avatar'),
+      emetteurMatricule: JsonAide.texte(emetteur, 'matricule_police'),
+      emetteursRoles: JsonAide.liste(emetteur, 'roles')
+          .map((r) => r.toString())
+          .toList(growable: false),
       commissariatNom: JsonAide.texte(j, 'commissariat_nom'),
       policierNom: JsonAide.texte(policier, 'nom') ?? JsonAide.texte(j, 'policier_nom'),
       policierPrenom: JsonAide.texte(policier, 'prenom') ?? JsonAide.texte(j, 'policier_prenom'),
@@ -139,6 +150,21 @@ class Alerte {
 
   String get emetteur =>
       [emetteurNom, emetteurPrenom].where((e) => e != null && e.isNotEmpty).join(' ');
+
+  /// Nom complet de l'émetteur : nom + postnom + prénom.
+  String get emetteurComplet =>
+      [emetteurNom, emetteurPostnom, emetteurPrenom]
+          .where((e) => e != null && e.isNotEmpty)
+          .join(' ');
+
+  /// Fonction affichée : matricule pour la police, sinon le rôle principal.
+  String get emetteurFonction {
+    if (emetteurMatricule != null && emetteurMatricule!.isNotEmpty) {
+      return emetteurMatricule!;
+    }
+    if (emetteursRoles.isNotEmpty) return emetteursRoles.first;
+    return '';
+  }
 
   String get policier =>
       [policierNom, policierPrenom].where((e) => e != null && e.isNotEmpty).join(' ');

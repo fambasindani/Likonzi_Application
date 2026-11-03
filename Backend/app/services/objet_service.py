@@ -218,7 +218,7 @@ def lister(
     total = query.count()
     page, per_page = max(page, 1), min(max(per_page, 1), 100)
     items = (
-        query.order_by(Objet.date_vol.desc(), Objet.id.desc())
+        query.order_by(Objet.created_at.desc(), Objet.id.desc())
         .offset((page - 1) * per_page)
         .limit(per_page)
         .all()

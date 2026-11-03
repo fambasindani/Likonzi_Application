@@ -39,8 +39,11 @@ class Objet {
     this.typeCode,
     this.typeLibelle,
     this.proprietaireNom,
+    this.proprietairePostnom,
     this.proprietairePrenom,
     this.proprietaireTel,
+    this.proprietaireAvatar,
+    this.proprietaireMatricule,
     this.preuves = const [],
   });
 
@@ -63,8 +66,11 @@ class Objet {
   final String? typeCode;
   final String? typeLibelle;
   final String? proprietaireNom;
+  final String? proprietairePostnom;
   final String? proprietairePrenom;
   final String? proprietaireTel;
+  final String? proprietaireAvatar;
+  final String? proprietaireMatricule;
   final List<String> preuves;
 
   factory Objet.brut(Map<String, dynamic> j) {
@@ -90,10 +96,14 @@ class Objet {
       typeCode: JsonAide.texte(type, 'code') ?? JsonAide.texte(j, 'type_code'),
       typeLibelle: JsonAide.texte(type, 'description') ?? JsonAide.texte(j, 'type_libelle'),
       proprietaireNom: JsonAide.texte(proprio, 'nom') ?? JsonAide.texte(j, 'proprietaire_nom'),
+      proprietairePostnom:
+          JsonAide.texte(proprio, 'postnom') ?? JsonAide.texte(j, 'proprietaire_postnom'),
       proprietairePrenom:
           JsonAide.texte(proprio, 'prenom') ?? JsonAide.texte(j, 'proprietaire_prenom'),
       proprietaireTel:
           JsonAide.texte(proprio, 'telephone') ?? JsonAide.texte(j, 'proprietaire_tel'),
+      proprietaireAvatar: JsonAide.texte(proprio, 'avatar'),
+      proprietaireMatricule: JsonAide.texte(proprio, 'matricule_police'),
       preuves: JsonAide.liste(j, 'preuves')
           .map((e) => JsonAide.texteDefaut(e, 'id'))
           .where((e) => e.isNotEmpty)
@@ -115,6 +125,12 @@ class Objet {
 
   String? get proprietaire =>
       [proprietaireNom, proprietairePrenom].where((e) => e != null && e.isNotEmpty).join(' ');
+
+  /// Nom complet du propriétaire : nom + postnom + prénom.
+  String get proprietaireComplet =>
+      [proprietaireNom, proprietairePostnom, proprietairePrenom]
+          .where((e) => e != null && e.isNotEmpty)
+          .join(' ');
 
   bool get estMien => statut == 'declare_vol' || statut == 'recherche';
 

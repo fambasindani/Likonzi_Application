@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../components/avatar.dart';
+import '../../components/fiche_identite.dart';
 import '../../components/liste.dart';
 import '../../models/social.dart';
 import '../../models/utilisateur.dart';
@@ -82,6 +83,21 @@ class _VueConversationState extends State<VueConversation> {
     });
   }
 
+  /// Un SOS du contact figure parmi les derniers échanges : on affiche alors
+  /// son identité détaillée (grande photo + appel) en haut de la conversation.
+  bool get _sosRecu {
+    final derniers = _messages.length > 5
+        ? _messages.sublist(_messages.length - 5)
+        : _messages;
+    return derniers.any(
+      (m) =>
+          m.idExpediteur == widget.destinataire.id &&
+          (m.contenu.contains('SOS') ||
+              m.contenu.startsWith('🚨') ||
+              m.contenu.startsWith('⚠️')),
+    );
+  }
+
   Future<void> _envoyer() async {
     final texte = _controleur.text.trim();
     if (texte.isEmpty || _envoi) return;
@@ -154,6 +170,21 @@ class _VueConversationState extends State<VueConversation> {
       ),
       body: Column(
         children: [
+          // SOS reçu : identité complète de l'émetteur (photo, nom, appel).
+          if (_sosRecu)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: FicheIdentite(
+                libelle: 'SOS reçu',
+                nom: widget.destinataire.nom,
+                postnom: widget.destinataire.postnom,
+                prenom: widget.destinataire.prenom,
+                fonction: widget.destinataire.fonction,
+                telephone: widget.destinataire.telephone,
+                avatar: widget.destinataire.urlAvatar,
+                accent: AppCouleurs.rouge,
+              ),
+            ),
           Expanded(
             child: _chargement
                 ? const EtatChargement()

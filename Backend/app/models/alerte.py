@@ -124,8 +124,11 @@ class Alerte(db.Model, TimestampMixin, SoftDeleteMixin):
         if with_details:
             data["type"] = self.type_alerte.to_dict() if self.type_alerte else None
             data["emetteur"] = (
-                {"id": self.user.id, "nom": self.user.nom, "prenom": self.user.prenom,
-                 "telephone": self.user.telephone, "avatar": self.user.avatar}
+                {"id": self.user.id, "nom": self.user.nom,
+                 "postnom": self.user.postnom, "prenom": self.user.prenom,
+                 "telephone": self.user.telephone, "avatar": self.user.avatar,
+                 "matricule_police": self.user.matricule_police,
+                 "roles": [r.nom for r in self.user.roles]}
                 if self.user else None
             )
             data["commissariat_nom"] = self.commissariat.nom if self.commissariat else None

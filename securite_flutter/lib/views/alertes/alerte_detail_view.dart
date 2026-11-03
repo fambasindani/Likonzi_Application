@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../components/avatar.dart';
 import '../../components/badge.dart';
 import '../../components/bouton.dart';
 import '../../components/carte_conteneur.dart';
+import '../../components/fiche_identite.dart';
 import '../../components/liste.dart';
 import '../../components/preuves_section.dart';
 import '../../models/alerte.dart';
@@ -385,19 +385,28 @@ class _VueDetailAlerteState extends State<VueDetailAlerte> {
               icone: Icons.groups_outlined,
               contenu: Column(
                 children: [
-                  _LigneActeur(
-                    nom: _alerte.emetteur.isNotEmpty ? _alerte.emetteur : '—',
-                    fonction: _alerte.emetteurId == auth.utilisateur?.id
-                        ? 'Émetteur (vous)'
-                        : (_alerte.emetteurTel ?? 'Émetteur'),
-                    nomPrenom: (_alerte.emetteurNom, _alerte.emetteurPrenom),
-                    url: _alerte.emetteurAvatar,
-                    // Pas d'auto-appel : on n'appelle pas son propre numéro.
-                    telephone: _alerte.emetteurId == auth.utilisateur?.id
-                        ? null
-                        : _alerte.emetteurTel,
-                    icone: Icons.person_outline,
-                  ),
+                  if (_alerte.emetteurId != null &&
+                      _alerte.emetteurId != auth.utilisateur?.id)
+                    // Un ami consulte mon alerte : identité détaillée avec
+                    // grande photo, nom complet, fonction et appel direct.
+                    FicheIdentite(
+                      libelle: "Auteur de l'alerte",
+                      nom: _alerte.emetteurNom,
+                      postnom: _alerte.emetteurPostnom,
+                      prenom: _alerte.emetteurPrenom,
+                      fonction: _alerte.emetteurFonction,
+                      telephone: _alerte.emetteurTel,
+                      avatar: _alerte.emetteurAvatar,
+                      accent: AppCouleurs.rouge,
+                    )
+                  else
+                    _LigneActeur(
+                      nom: _alerte.emetteur.isNotEmpty ? _alerte.emetteur : '—',
+                      fonction: 'Émetteur (vous)',
+                      nomPrenom: (_alerte.emetteurNom, _alerte.emetteurPrenom),
+                      url: _alerte.emetteurAvatar,
+                      icone: Icons.person_outline,
+                    ),
                   const Divider(height: 18),
                   _LigneActeur(
                     nom: _alerte.commissariatNom ?? 'Non affecté',
@@ -540,7 +549,6 @@ class _LigneActeur extends StatelessWidget {
     required this.icone,
     this.nomPrenom,
     this.url,
-    this.telephone,
   });
 
   final String nom;
@@ -550,20 +558,6 @@ class _LigneActeur extends StatelessWidget {
 
   /// Photo réelle de l'émetteur (sinon initiales).
   final String? url;
-
-  /// Numéro affiché + bouton d'appel.
-  final String? telephone;
-
-  Future<void> _appeler() async {
-    final numero = (telephone ?? '').replaceAll(RegExp(r'[^\d+]'), '');
-    if (numero.isEmpty) return;
-    final uri = Uri(scheme: 'tel', path: numero);
-    try {
-      await launchUrl(uri);
-    } catch (_) {
-      // Aucune application d'appel sur l'appareil.
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -596,17 +590,6 @@ class _LigneActeur extends StatelessWidget {
             ],
           ),
         ),
-        if (telephone != null && telephone!.replaceAll(RegExp(r'[^\d+]'), '').isNotEmpty)
-          IconButton(
-            tooltip: 'Appeler $nom',
-            onPressed: _appeler,
-            icon: const Icon(Icons.call_outlined, size: 21),
-            color: AppCouleurs.vert,
-            style: IconButton.styleFrom(
-              backgroundColor: AppCouleurs.vertPastel,
-              padding: const EdgeInsets.all(8),
-            ),
-          ),
       ],
     );
   }

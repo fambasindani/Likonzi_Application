@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../components/badge.dart';
 import '../../components/bouton.dart';
 import '../../components/carte_conteneur.dart';
+import '../../components/fiche_identite.dart';
 import '../../components/liste.dart';
 import '../../components/preuves_section.dart';
 import 'objet_create_view.dart';
@@ -374,6 +375,20 @@ class _VueDetailObjetState extends State<VueDetailObjet> {
               ),
             ),
             const SizedBox(height: 14),
+            // Un ami consulte mon bien : identité détaillée du propriétaire.
+            if (!estProprietaire && _objet.proprietaireComplet.isNotEmpty) ...[
+              FicheIdentite(
+                libelle: 'Propriétaire du bien',
+                nom: _objet.proprietaireNom,
+                postnom: _objet.proprietairePostnom,
+                prenom: _objet.proprietairePrenom,
+                fonction: _objet.proprietaireMatricule,
+                telephone: _objet.proprietaireTel,
+                avatar: _objet.proprietaireAvatar,
+                accent: AppCouleurs.orange,
+              ),
+              const SizedBox(height: 14),
+            ],
             TitreSection(titre: 'Caractéristiques', icone: Icons.info_outline, padding: EdgeInsets.zero),
             CarteConteneur(
               enfant: Column(

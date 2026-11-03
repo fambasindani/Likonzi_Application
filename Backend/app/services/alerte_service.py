@@ -5,7 +5,7 @@ import secrets
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import or_, text
+from sqlalchemy import or_
 
 from ..exceptions import ForbiddenError, NotFoundError, ValidationFailed
 from ..extensions import db
@@ -235,14 +235,9 @@ def lister(
 
     total = query.count()
     page, per_page = max(page, 1), min(max(per_page, 1), 100)
-    # Les alertes les plus récentes et les plus urgentes d'abord.
-    urgence_ordre = (
-        "FIELD(niveau_urgence,'critique','eleve','moyen','faible')"
-    )
+    # Dernier publié d'abord : les alertes les plus récentes en haut.
     items = (
-        query.order_by(
-            text(urgence_ordre + ", date_alerte DESC"),
-        )
+        query.order_by(Alerte.date_alerte.desc(), Alerte.id.desc())
         .offset((page - 1) * per_page)
         .limit(per_page)
         .all()

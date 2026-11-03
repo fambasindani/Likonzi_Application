@@ -94,7 +94,9 @@ class Objet(db.Model, TimestampMixin, SoftDeleteMixin):
             data["type"] = self.type_objet.to_dict() if self.type_objet else None
             data["proprietaire"] = (
                 {"id": self.proprietaire.id, "nom": self.proprietaire.nom,
-                 "prenom": self.proprietaire.prenom, "telephone": self.proprietaire.telephone}
+                 "postnom": self.proprietaire.postnom, "prenom": self.proprietaire.prenom,
+                 "telephone": self.proprietaire.telephone, "avatar": self.proprietaire.avatar,
+                 "matricule_police": self.proprietaire.matricule_police}
                 if self.proprietaire else None
             )
         return data
