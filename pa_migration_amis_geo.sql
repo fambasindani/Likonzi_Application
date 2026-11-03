@@ -1,7 +1,29 @@
-﻿-- Migration PA : amis + geocodage inverse (a executer UNE fois)
+﻿-- Migration PA : amis + geocodage inverse + SOS (a executer UNE fois)
 USE sindani$default;
 
--- 1) Nouveau type de notification
+-- 0) Table SOS (compte a rebours serveur) si elle n'existe pas encore
+CREATE TABLE IF NOT EXISTS `sos` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id_user` INT UNSIGNED NOT NULL,
+  `statut` VARCHAR(20) NOT NULL DEFAULT 'programme',
+  `duree_minutes` TINYINT UNSIGNED NOT NULL DEFAULT 15,
+  `echeance` DATETIME NOT NULL,
+  `latitude` DECIMAL(10,7) NULL,
+  `longitude` DECIMAL(10,7) NULL,
+  `intermediaire_at` DATETIME NULL,
+  `envoye_at` DATETIME NULL,
+  `cloture_at` DATETIME NULL,
+  `id_alerte` BIGINT UNSIGNED NULL,
+  `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_sos_user_statut` (`id_user`, `statut`),
+  KEY `idx_sos_echeance` (`statut`, `echeance`),
+  CONSTRAINT `fk_sos_user` FOREIGN KEY (`id_user`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_sos_alerte` FOREIGN KEY (`id_alerte`) REFERENCES `alertes` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 1) Nouveaux types de notification
 ALTER TABLE `notifications`
   MODIFY `type` ENUM('systeme','demande_ami','message','alerte_creee','alerte_assignee','alerte_resolue','cas_maj','preuve_ajoutee','objet_retrouve','partage','sos','objet_declare') NOT NULL DEFAULT 'systeme';
 
