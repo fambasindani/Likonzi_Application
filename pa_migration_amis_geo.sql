@@ -1,4 +1,4 @@
-﻿-- Migration PA : amis + geocodage inverse + SOS (a executer UNE fois)
+-- Migration PA : amis + geocodage inverse + SOS (a executer UNE fois)
 USE sindani$default;
 
 -- 0) Table SOS (compte a rebours serveur) si elle n'existe pas encore
