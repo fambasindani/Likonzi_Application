@@ -3,7 +3,7 @@
     <!-- Nom de l'application affiche par Android (lanceur, taches recentes,
          parametres systeme). Une seule source de verite : le manifeste et les
          plugins (notifications, partage) le lisent ici. -->
-    <string name="app_name">LIKONZI</string>
+    <string name="app_name">Kebat</string>
 
     <!-- Widget d'accueil SOS -->
     <string name="sos_widget_titre">SOS</string>

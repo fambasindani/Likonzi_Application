@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -67,7 +67,7 @@ void main() {
       envString: 'API_BASE_URL=http://localhost:1/api/v1\n'
           'SOCKET_URL=http://localhost:1\n'
           'MAP_PROVIDER=osm\n'
-          'APP_NOM=LIKONZI\n'
+          'APP_NOM=Kebat\n'
           'APP_SLOGAN=Protéger, alerter, intervenir\n'
           'DEBUG_RESEAU=false\n'
           'PAR_PAGE=20\n',

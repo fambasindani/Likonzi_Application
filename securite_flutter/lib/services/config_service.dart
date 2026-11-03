@@ -41,7 +41,7 @@ class ConfigService {
       _lit('OSM_TILE_URL', 'https://tile.openstreetmap.org/{z}/{x}/{y}.png');
   static String get tuileUtilisateur => _lit('OSM_USER_AGENT', 'securite_rdc/1.0');
 
-  static String get nomApp => _lit('APP_NOM', 'LIKONZI');
+  static String get nomApp => _lit('APP_NOM', 'Kebat');
   static String get slogan => _lit('APP_SLOGAN', 'Protéger, alerter, intervenir');
 
   static bool get debugReseau => _lit('DEBUG_RESEAU', 'false').toLowerCase() == 'true';

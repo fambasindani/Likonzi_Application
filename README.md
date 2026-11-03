@@ -1,6 +1,6 @@
 # Likonzi_Application
 
-Application mobile **LIKONZI** (Sécurité Sociale RDC) : citoyens et police
+Application mobile **Kebat** (Sécurité Sociale RDC) : citoyens et police
 dans la même application — alertes d'urgence, dossiers d'enquête, objets volés,
 preuves photo/vidéo, cartes OpenStreetMap, messagerie et notifications en
 temps réel.
