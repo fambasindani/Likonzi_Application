@@ -387,10 +387,15 @@ class _VueDetailAlerteState extends State<VueDetailAlerte> {
                 children: [
                   _LigneActeur(
                     nom: _alerte.emetteur.isNotEmpty ? _alerte.emetteur : '—',
-                    fonction: _alerte.emetteurTel ?? 'Émetteur',
+                    fonction: _alerte.emetteurId == auth.utilisateur?.id
+                        ? 'Émetteur (vous)'
+                        : (_alerte.emetteurTel ?? 'Émetteur'),
                     nomPrenom: (_alerte.emetteurNom, _alerte.emetteurPrenom),
                     url: _alerte.emetteurAvatar,
-                    telephone: _alerte.emetteurTel,
+                    // Pas d'auto-appel : on n'appelle pas son propre numéro.
+                    telephone: _alerte.emetteurId == auth.utilisateur?.id
+                        ? null
+                        : _alerte.emetteurTel,
                     icone: Icons.person_outline,
                   ),
                   const Divider(height: 18),

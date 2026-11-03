@@ -4,6 +4,26 @@ import '../models/geographie.dart';
 import '../models/reponse_api.dart';
 import 'api_client.dart';
 
+/// Lieu : résultat du géocodage inverse (`GET /lieu`).
+class Lieu {
+  Lieu({this.ville, this.commune, this.province, this.distanceKm});
+
+  final String? ville;
+  final String? commune;
+  final String? province;
+  final double? distanceKm;
+
+  factory Lieu.brut(Map<String, dynamic> j) => Lieu(
+        ville: JsonAide.texte(j, 'ville'),
+        commune: JsonAide.texte(j, 'commune'),
+        province: JsonAide.texte(j, 'province'),
+        distanceKm: JsonAide.decimal(j, 'distance_km'),
+      );
+
+  /// Libellé affiché dans l'en-tête : la commune si elle est connue, sinon la ville.
+  String get affichage => (commune?.isNotEmpty ?? false) ? commune! : (ville ?? '');
+}
+
 /// Position de l'appareil + endpoints de proximité.
 class GeoService {
   GeoService._();
@@ -52,6 +72,14 @@ class GeoService {
   }
 
   // ------------------------------------------------------------ API backend
+
+  /// Géocodage inverse : nom de la ville/commune pour un point GPS.
+  Future<Lieu?> lieu({required double latitude, required double longitude}) async {
+    final corps = await _api.get('/lieu', params: {'lat': latitude, 'lon': longitude});
+    final data = corps is Map<String, dynamic> ? corps['data'] : null;
+    if (data is! Map<String, dynamic>) return null;
+    return Lieu.brut(Map<String, dynamic>.from(data));
+  }
 
   Future<Localisation> enregistrerPosition({
     required double latitude,

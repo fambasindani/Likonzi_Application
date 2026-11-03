@@ -11,6 +11,7 @@ import '../../services/social_service.dart';
 import '../../theme/couleurs.dart';
 import '../../utils/formatage.dart';
 import '../../utils/messages.dart';
+import '../carte/itineraire_view.dart';
 
 /// Conversation privée avec un contact.
 class VueConversation extends StatefulWidget {
@@ -109,6 +110,16 @@ class _VueConversationState extends State<VueConversation> {
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 0,
+        actions: [
+          // Depuis un message reçu : itinéraire vers le commissariat le plus proche.
+          IconButton(
+            tooltip: 'Itinéraire vers la police',
+            icon: const Icon(Icons.directions_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const VueItineraire()),
+            ),
+          ),
+        ],
         title: Row(
           children: [
             AvatarUtilisateur.noms(

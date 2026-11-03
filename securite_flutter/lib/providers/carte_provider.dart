@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
@@ -18,6 +20,7 @@ class CarteProvider extends ChangeNotifier {
 
   Position? _position;
   LatLng? _centre;
+  Lieu? _lieu;
   List<Commissariat> _commissariats = [];
   List<AlerteProche> _alertesProches = [];
   bool _chargement = false;
@@ -26,6 +29,10 @@ class CarteProvider extends ChangeNotifier {
 
   Position? get position => _position;
   LatLng? get centre => _centre;
+
+  /// Ville/commune la plus proche de la position (en-tête de l'accueil).
+  Lieu? get lieu => _lieu;
+  String? get ville => (_lieu?.affichage.isNotEmpty ?? false) ? _lieu!.affichage : null;
   List<Commissariat> get commissariats => List.unmodifiable(_commissariats);
   List<AlerteProche> get alertesProches => List.unmodifiable(_alertesProches);
   bool get chargement => _chargement;
@@ -49,6 +56,7 @@ class CarteProvider extends ChangeNotifier {
       _position = position;
       if (position != null) {
         _centre = LatLng(position.latitude, position.longitude);
+        await _chargerLieu(position);
       }
       return position != null;
     } on ExceptionApi catch (e) {
@@ -61,6 +69,55 @@ class CarteProvider extends ChangeNotifier {
       _positionEnCours = false;
       notifyListeners();
     }
+  }
+
+  /// Résout la ville/commune depuis le GPS (géocodage inverse du serveur).
+  Future<void> _chargerLieu(Position position) async {
+    try {
+      _lieu = await _geo.lieu(latitude: position.latitude, longitude: position.longitude);
+    } catch (_) {
+      // Sans réseau : la ville reste inconnue, l'en-tête affiche le défaut.
+    }
+  }
+
+  StreamSubscription<Position>? _suiviPosition;
+  DateTime? _dernierePublication;
+
+  /// Suit la position pendant le déplacement : l'en-tête, la carte et les
+  /// alertes proches restent à jour ; la position est publiée au serveur au
+  /// plus une fois toutes les 30 s (et après 25 m de déplacement).
+  Future<void> demarrerSuivi() async {
+    if (_suiviPosition != null) return;
+    final ok = await localiserAppareil();
+    if (!ok) return;
+    _suiviPosition = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 25,
+      ),
+    ).listen((position) {
+      _position = position;
+      _centre = LatLng(position.latitude, position.longitude);
+      notifyListeners();
+
+      final maintenant = DateTime.now();
+      final dernier = _dernierePublication;
+      if (dernier == null || maintenant.difference(dernier).inSeconds >= 30) {
+        _dernierePublication = maintenant;
+        publierMaPosition(); // best effort : un échec réseau n'arrête pas le suivi
+      }
+    });
+  }
+
+  void arreterSuivi() {
+    _suiviPosition?.cancel();
+    _suiviPosition = null;
+  }
+
+  @override
+  void dispose() {
+    _suiviPosition?.cancel();
+    super.dispose();
   }
 
   /// Enregistre la position côté backend (`POST /positions`).

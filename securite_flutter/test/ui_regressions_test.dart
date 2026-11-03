@@ -323,16 +323,24 @@ void main() {
         details.clear();
         FlutterError.onError = capter;
         await tester.pumpWidget(
-          MaterialApp(
-            theme: construireTheme(),
-            locale: const Locale('fr'),
-            localizationsDelegates: const [
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
+          MultiProvider(
+            providers: [
+              // CarteAlerte affiche le badge « Ami » : elle a besoin d'AuthProvider.
+              ChangeNotifierProvider(
+                create: (_) => AuthProvider()..appliquerProfil(profil()),
+              ),
             ],
-            home: Scaffold(
-              body: ListView(padding: const EdgeInsets.all(16), children: [carte.value]),
+            child: MaterialApp(
+              theme: construireTheme(),
+              locale: const Locale('fr'),
+              localizationsDelegates: const [
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              home: Scaffold(
+                body: ListView(padding: const EdgeInsets.all(16), children: [carte.value]),
+              ),
             ),
           ),
         );

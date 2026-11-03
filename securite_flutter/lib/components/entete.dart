@@ -90,12 +90,16 @@ class BanniereAccueil extends StatelessWidget {
     super.key,
     required this.titre,
     required this.message,
+    this.sousTitre,
     this.elevee,
     this.actions = const [],
   });
 
   final String titre;
   final String message;
+
+  /// Ligne d'état sous le message (ex. « Position activée »).
+  final String? sousTitre;
   final Widget? elevee;
   final List<Widget> actions;
 
@@ -143,6 +147,32 @@ class BanniereAccueil extends StatelessWidget {
                         color: AppCouleurs.blanc.withValues(alpha: 0.9),
                       ),
                     ),
+                    if (sousTitre != null) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.location_on_outlined,
+                            size: 15,
+                            color: AppCouleurs.blanc.withValues(alpha: 0.85),
+                          ),
+                          const SizedBox(width: 5),
+                          Flexible(
+                            child: Text(
+                              sousTitre!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                                color: AppCouleurs.blanc.withValues(alpha: 0.85),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),

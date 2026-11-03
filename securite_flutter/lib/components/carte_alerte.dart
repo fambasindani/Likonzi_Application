@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../models/alerte.dart';
+import '../providers/auth_provider.dart';
 import '../theme/couleurs.dart';
 import '../utils/formatage.dart';
 import 'avatar.dart';
@@ -43,6 +45,10 @@ class CarteAlerte extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final urgence = AppCouleurs.urgence(alerte.niveauUrgence);
+    // Alerte reçue d'un contact : badge « Ami » (jamais sur ses propres alertes).
+    final moiId = context.watch<AuthProvider>().utilisateur?.id;
+    final alerteAmi =
+        !afficherEmetteur && alerte.emetteurId != null && alerte.emetteurId != moiId;
     return CarteConteneur(
       onTap: onTap,
       bordure: alerte.estNouvelle ? urgence.withValues(alpha: 0.55) : AppCouleurs.bordure,
@@ -120,6 +126,12 @@ class CarteAlerte extends StatelessWidget {
             children: [
               BadgeUrgence(niveau: alerte.niveauUrgence, compact: true),
               BadgeStatut(statut: alerte.statut, compact: true),
+              if (alerteAmi)
+                const BadgeSimple(
+                  texte: 'Ami',
+                  icone: Icons.people_outline,
+                  compact: true,
+                ),
               if (alerte.adressePrecise != null && alerte.adressePrecise!.isNotEmpty)
                 BadgeSimple(
                   texte: alerte.adressePrecise!,

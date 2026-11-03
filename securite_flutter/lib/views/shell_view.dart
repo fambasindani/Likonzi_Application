@@ -7,6 +7,7 @@ import '../components/badge.dart';
 import '../models/alerte.dart';
 import '../providers/alerte_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/carte_provider.dart';
 import '../providers/social_provider.dart';
 import '../services/socket_service.dart';
 import '../theme/couleurs.dart';
@@ -50,7 +51,7 @@ class _ShellViewState extends State<ShellView> {
     _Onglet('Alertes', Icons.notifications_none, Icons.notifications_active),
     _Onglet('Carte', Icons.map_outlined, Icons.map),
     _Onglet('Dossiers', Icons.folder_outlined, Icons.folder),
-    _Onglet('Boîte', Icons.mail_outline, Icons.mail),
+    _Onglet('Messages', Icons.mail_outline, Icons.mail),
   ];
 
   @override
@@ -71,6 +72,9 @@ class _ShellViewState extends State<ShellView> {
     final social = context.read<SocialProvider>();
 
     SocketService.instance.connecter();
+
+    // Localisation continue : la position reste à jour pendant les déplacements.
+    unawaited(context.read<CarteProvider>().demarrerSuivi());
 
     await Future.wait([
       alertes.charger(forcer: true),

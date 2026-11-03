@@ -8,6 +8,7 @@ import '../../components/carte_conteneur.dart';
 import '../../components/liste.dart';
 import '../../providers/alerte_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/carte_provider.dart';
 import '../../providers/sos_provider.dart';
 import '../../providers/social_provider.dart';
 import '../../theme/couleurs.dart';
@@ -40,7 +41,9 @@ class _VueAccueilState extends State<VueAccueil> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
-      await context.read<AlerteProvider>().charger(forcer: true);
+      // Position d'abord : elle alimente la ville de l'en-tête.
+      await context.read<CarteProvider>().localiserAppareil();
+      if (mounted) await context.read<AlerteProvider>().charger(forcer: true);
       if (mounted) await context.read<SocialProvider>().rafraichirCompteurs();
       if (mounted) await context.read<SosProvider>().rafraichir();
     });
@@ -59,7 +62,19 @@ class _VueAccueilState extends State<VueAccueil> {
     final alertes = context.watch<AlerteProvider>();
     final social = context.watch<SocialProvider>();
     final sos = context.watch<SosProvider>();
+    final carte = context.watch<CarteProvider>();
     final utilisateur = auth.utilisateur;
+
+    // « Citoyen • Kinshasa » — la ville vient du géocodage inverse du GPS.
+    final ligneProfil = utilisateur == null
+        ? configSloganTexte
+        : [
+            utilisateur.fonction,
+            if (utilisateur.commissariatNom != null)
+              utilisateur.commissariatNom!
+            else
+              (carte.ville ?? 'Kinshasa'),
+          ].join(' • ');
 
     return Scaffold(
       body: SafeArea(
@@ -74,11 +89,11 @@ class _VueAccueilState extends State<VueAccueil> {
           children: [
             // ----------------------------------------------------- bannière
             BanniereAccueil(
-              titre: '${_salutation()},\n${utilisateur?.prenomAffiche ?? 'ami'}',
-              message: utilisateur == null
-                  ? configSloganTexte
-                  : '${utilisateur.fonction}'
-                      '${utilisateur.commissariatNom != null ? ' — ${utilisateur.commissariatNom}' : ''}',
+              titre: '${_salutation()}, ${utilisateur?.prenomAffiche ?? 'ami'}',
+              message: ligneProfil,
+              sousTitre: carte.position != null
+                  ? 'Position activée'
+                  : 'Position non activée',
               actions: [
                 IconButton(
                   onPressed: () => Navigator.of(context).push(
