@@ -213,6 +213,20 @@ if com_test_ligne:
     r = C.delete(f"{P}/commissariats/{com_test_ligne['id']}", headers=H)
     check("DELETE /commissariats (purge douce) -> 200", r.status_code == 200, str(r.status_code))
 
+# ============================================================ géocodage inverse
+r = C.get(f"{P}/lieu", headers=H, query_string={"lat": -4.32, "lon": 15.31})
+lieu = data_of(r) if r.status_code == 200 else {}
+check("GET /lieu -> 200", r.status_code == 200, str(r.status_code) + str(json_of(r))[:200])
+check("lieu : ville identifiee depuis les coordonnees", bool(lieu.get("ville")),
+      str(lieu.get("ville")))
+check("lieu : commune renvoyee", bool(lieu.get("commune")), str(lieu.get("commune")))
+check("lieu : distance en km calculee", lieu.get("distance_km") is not None,
+      str(lieu.get("distance_km")))
+r = C.get(f"{P}/lieu", headers=H)
+check("GET /lieu sans coordonnees -> 422", r.status_code == 422, str(r.status_code))
+r = C.get(f"{P}/lieu", query_string={"lat": -4.32, "lon": 15.31})
+check("GET /lieu sans jeton -> 401", r.status_code == 401, str(r.status_code))
+
 # ================================================================ cloisonnement RBAC
 r = C.post(f"{P}/users", headers=H,
            json={"email": f"geo{suffix}@test.cd", "password": "12345678",

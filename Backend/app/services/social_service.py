@@ -201,9 +201,12 @@ def lister_demandes(
     return query.order_by(Demande.date_demande.desc()).all()
 
 
-def mes_amis(acteur: User, q: str | None = None) -> list[User]:
-    """Amis dans les DEUX sens (miroir de la vue `v_amis_acceptes`)."""
-    ids_amis: set[int] = set()
+def ids_amis(acteur: User) -> list[int]:
+    """Identifiants des amis acceptés — version légère de `mes_amis` (sans `User`).
+
+    Sert de périmètre partagé : alertes et objets visibles par les contacts.
+    """
+    ids: set[int] = set()
     for d in (
         db.session.query(Demande)
         .filter(
@@ -212,11 +215,17 @@ def mes_amis(acteur: User, q: str | None = None) -> list[User]:
         )
         .all()
     ):
-        ids_amis.add(d.envoi_id if d.recev_id == acteur.id else d.recev_id)
-    ids_amis.discard(acteur.id)
-    if not ids_amis:
+        ids.add(d.envoi_id if d.recev_id == acteur.id else d.recev_id)
+    ids.discard(acteur.id)
+    return sorted(ids)
+
+
+def mes_amis(acteur: User, q: str | None = None) -> list[User]:
+    """Amis dans les DEUX sens (miroir de la vue `v_amis_acceptes`)."""
+    ids = ids_amis(acteur)
+    if not ids:
         return []
-    query = db.session.query(User).filter(User.id.in_(ids_amis), User.deleted_at.is_(None))
+    query = db.session.query(User).filter(User.id.in_(ids), User.deleted_at.is_(None))
     if q:
         like = f"%{q.strip()}%"
         query = query.filter(

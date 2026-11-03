@@ -8,7 +8,7 @@ from decimal import Decimal
 from sqlalchemy import func
 
 from ..extensions import db
-from ..models import Alerte, Commissariat, Localisation, User
+from ..models import Alerte, Commissariat, Commune, Localisation, User, Ville
 from .validators import Payload
 
 RAYON_TERRE_KM = 6371.0088
@@ -33,6 +33,67 @@ def boite_englobante(lat: float, lon: float, rayon_km: float) -> tuple[float, fl
     dlon = rayon_km / (111.320 * cos_lat)
     # Gestion du passage par le méridien 180°
     return (lat - dlat, lat + dlat, lon - dlon, lon + dlon)
+
+
+def lieu_depuis_position(lat: float, lon: float) -> dict:
+    """Géocodage inverse local : commune et ville les plus proches du point.
+
+    Utilise uniquement le référentiel (`communes`, `villes`) — aucun service
+    externe : l'en-tête de l'application affiche ainsi « Kinshasa » depuis le GPS.
+    """
+    meilleure_commune: Commune | None = None
+    distance_commune: float | None = None
+    for commune in (
+        db.session.query(Commune)
+        .filter(Commune.latitude.isnot(None), Commune.longitude.isnot(None))
+        .all()
+    ):
+        d = haversine(lat, lon, float(commune.latitude), float(commune.longitude))
+        if distance_commune is None or d < distance_commune:
+            distance_commune, meilleure_commune = d, commune
+
+    meilleure_ville: Ville | None = None
+    distance_ville: float | None = None
+    for ville in (
+        db.session.query(Ville)
+        .filter(Ville.latitude.isnot(None), Ville.longitude.isnot(None))
+        .all()
+    ):
+        d = haversine(lat, lon, float(ville.latitude), float(ville.longitude))
+        if distance_ville is None or d < distance_ville:
+            distance_ville, meilleure_ville = d, ville
+
+    def _repere(nom_ville, nom_commune, nom_province, ref, distance, source) -> dict:
+        return {
+            "ville": nom_ville,
+            "commune": nom_commune,
+            "province": nom_province,
+            "latitude": float(ref.latitude) if ref is not None else None,
+            "longitude": float(ref.longitude) if ref is not None else None,
+            "distance_km": round(distance, 2) if distance is not None else None,
+            "source": source,
+        }
+
+    if meilleure_commune is not None:
+        ville = meilleure_commune.ville
+        return _repere(
+            ville.nom if ville else None,
+            meilleure_commune.nom,
+            ville.province.nom if ville and ville.province else None,
+            meilleure_commune,
+            distance_commune,
+            "commune",
+        )
+    if meilleure_ville is not None:
+        return _repere(
+            meilleure_ville.nom,
+            None,
+            meilleure_ville.province.nom if meilleure_ville.province else None,
+            meilleure_ville,
+            distance_ville,
+            "ville",
+        )
+    return _repere(None, None, None, None, None, None)
 
 
 # --------------------------------------------------------------------------- positions

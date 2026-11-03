@@ -11,8 +11,8 @@ from ..exceptions import ForbiddenError, NotFoundError, ValidationFailed
 from ..extensions import db
 from ..models import Alerte, TypeAlerte, User
 from ..realtime import prevoir
-from . import audit_service, geo_service
-from .notification_service import creer_notification
+from . import audit_service, geo_service, social_service
+from .notification_service import creer_notification, notifier_groupe
 from .validators import Payload
 
 # Transitions autorisées du statut d'une alerte.
@@ -39,7 +39,11 @@ def nouvelle_reference() -> str:
 
 
 def scope_alertes(query, user: User):
-    """Périmètre de visibilité selon le rôle de l'utilisateur."""
+    """Périmètre de visibilité selon le rôle de l'utilisateur.
+
+    Un citoyen voit ses alertes **et celles de ses amis** (demandes acceptées) :
+    « mes amis voient mes alertes ».
+    """
     if user.has_role("admin", "super_admin"):
         return query
     if user.has_role(*ROLES_POLICE):
@@ -48,6 +52,9 @@ def scope_alertes(query, user: User):
             conditions.append(Alerte.id_commissariat == user.id_commissariat)
         conditions.append(Alerte.id_policier_assignee == user.id)
         return query.filter(or_(*conditions))
+    amis = social_service.ids_amis(user)
+    if amis:
+        return query.filter(or_(Alerte.id_user == user.id, Alerte.id_user.in_(amis)))
     return query.filter(Alerte.id_user == user.id)
 
 
@@ -59,7 +66,10 @@ def _alerte_visible(alerte: Alerte, user: User) -> bool:
             (user.id_commissariat and alerte.id_commissariat == user.id_commissariat)
             or alerte.id_policier_assignee == user.id
         )
-    return alerte.id_user == user.id
+    if alerte.id_user == user.id:
+        return True
+    # Les amis consultent les alertes de leurs contacts.
+    return alerte.id_user in social_service.ids_amis(user)
 
 
 def recuperer(alerte_id: int, user: User) -> Alerte:
@@ -151,6 +161,20 @@ def creer(data: dict, acteur: User) -> Alerte:
             longitude=float(alerte.longitude) if alerte.longitude is not None else None,
             adresse_precise=alerte.adresse_precise,
             emetteur_id=acteur.id,
+        )
+
+    # Les amis de l'émetteur reçoivent aussi l'alerte (notification + liste).
+    amis_ids = social_service.ids_amis(acteur)
+    if amis_ids:
+        notifier_groupe(
+            amis_ids,
+            f"Alerte de {acteur.nom}",
+            f"[{alerte.reference}] {contenu[:120]}",
+            type_notif="alerte_creee",
+            id_sender=acteur.id,
+            entite_type="alerte",
+            entite_id=alerte.id,
+            lien=f"/alertes/{alerte.id}",
         )
 
     audit_service.audit(

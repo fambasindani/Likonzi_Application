@@ -464,6 +464,27 @@ amis_b = [u["id"] for u in data_of(r)]
 check("A voit B parmi ses amis", ID_B in amis_a, str(amis_a))
 check("B voit A parmi ses amis (miroir de la vue)", ID_A in amis_b, str(amis_b))
 
+# ------------------------------------------- les amis voient mes alertes
+r = C.post(f"{P}/alertes", headers=auth(T_A),
+           json={"id_type_alerte": 1, "contenu": "Alerte visible par mes amis.",
+                 "niveau_urgence": "moyen", "latitude": LAT, "longitude": LON})
+AL_AMI = data_of(r).get("id")
+check("alerte creee apres l amitie -> 201", r.status_code == 201,
+      str(r.status_code) + str(json_of(r))[:160])
+
+r = C.get(f"{P}/alertes", headers=auth(T_B))
+ids_b = [a["id"] for a in data_of(r)]
+check("l ami voit l alerte de son contact dans sa liste", AL_AMI in ids_b, str(len(ids_b)))
+r = C.get(f"{P}/alertes/{AL_AMI}", headers=auth(T_B))
+check("l ami ouvre le detail (200)", r.status_code == 200, str(r.status_code))
+r = C.get(f"{P}/alertes/{AL_AMI}", headers=auth(T_X))
+check("l intrus ne voit pas (404)", r.status_code == 404, str(r.status_code))
+r = C.get(f"{P}/notifications", headers=auth(T_B))
+check("l ami est notifie a la creation",
+      any(n.get("entite_type") == "alerte" and n.get("entite_id") == AL_AMI
+          for n in data_of(r)),
+      str([n.get("type") for n in data_of(r)])[:200])
+
 r = C.post(f"{P}/messages", headers=auth(T_A),
            json={"id_destinataire": ID_B, "messages": "Merci pour l'alerte partagée."})
 msg = data_of(r)
@@ -658,14 +679,19 @@ check("modification enregistree (marque)",
 check("modification enregistree (modele)",
       maj.get("model") == "ThinkPad X1", str(maj.get("model")))
 
-# --- un ami ne peut PAS modifier le bien d'autrui (il ne voit meme pas la fiche)
+# --- un ami VOIT le bien (nouveau perimetre : les amis voient mes objets)
+# --- mais il ne peut ni le modifier ni le supprimer
 r = C.patch(f"{P}/objets/{BIEN2}", headers=auth(T_B), json={"marque": "Pirate"})
-check("ami : modification refusee (404, non partage)", r.status_code == 404, str(r.status_code))
+check("ami : modification refusee (403, visible sans etre proprietaire)",
+      r.status_code == 403, str(r.status_code))
 
-# --- suppression par un tiers
+# --- un tiers hors amitie ne voit toujours pas la fiche
+r = C.patch(f"{P}/objets/{BIEN2}", headers=auth(T_X), json={"marque": "Pirate"})
+check("intrus : objet toujours invisible -> 404", r.status_code == 404, str(r.status_code))
+
+# --- suppression par un ami
 r = C.delete(f"{P}/objets/{BIEN2}", headers=auth(T_B))
-check("tiers : suppression refusee -> 404 (objet invisible)", r.status_code == 404,
-      str(r.status_code))
+check("ami : suppression refusee -> 403", r.status_code == 403, str(r.status_code))
 
 # --- suppression par le proprietaire
 r = C.delete(f"{P}/objets/{BIEN2}", headers=auth(T_A))

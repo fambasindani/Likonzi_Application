@@ -51,6 +51,18 @@ def lister_positions():
 # ------------------------------------------------------------------------ proximité
 
 
+@geo_bp.get("/lieu")
+@login_required
+def lieu():
+    """Géocodage inverse : nom de la ville/commune pour un point GPS (en-tête)."""
+    latitude = query_float("lat", requis=True, min_val=-90.0, max_val=90.0)
+    longitude = query_float("lon", requis=True, min_val=-180.0, max_val=180.0)
+    return ok(
+        data=geo_service.lieu_depuis_position(latitude, longitude),
+        meta={"lat": latitude, "lon": longitude},
+    )
+
+
 @geo_bp.get("/proximite/commissariats")
 @login_required
 @require_permission("geo.proximite")

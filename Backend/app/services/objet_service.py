@@ -9,8 +9,8 @@ from sqlalchemy import or_
 from ..exceptions import ForbiddenError, NotFoundError, ValidationFailed
 from ..extensions import db
 from ..models import Cas, Objet, Partage, TypeObjet, User
-from . import audit_service
-from .notification_service import creer_notification
+from . import audit_service, social_service
+from .notification_service import creer_notification, notifier_groupe
 from .validators import Payload
 
 STATUTS_OBJET = [
@@ -47,6 +47,9 @@ def _objets_partages_vers(user: User):
 def _visible(objet: Objet, user: User) -> bool:
     if user.has_role(*ROLES_POLICE) or objet.id_user_proprietaire == user.id:
         return True
+    # Les amis voient les objets déclarés par leurs contacts.
+    if objet.id_user_proprietaire in social_service.ids_amis(user):
+        return True
     # L'objet a été explicitement partagé avec cet utilisateur.
     return (
         db.session.query(Partage.id)
@@ -57,8 +60,12 @@ def _visible(objet: Objet, user: User) -> bool:
 
 
 def scope_objets(query, user: User):
+    """Périmètre : police = tout ; citoyen = ses objets **et ceux de ses amis**."""
     if user.has_role(*ROLES_POLICE):
         return query
+    amis = social_service.ids_amis(user)
+    if amis:
+        return query.filter(Objet.id_user_proprietaire.in_([user.id, *amis]))
     return query.filter(Objet.id_user_proprietaire == user.id)
 
 
@@ -150,6 +157,23 @@ def creer(data: dict, acteur: User) -> Objet:
     )
     db.session.add(objet)
     db.session.flush()
+
+    # Les amis sont prévenus de la déclaration (vol / perte).
+    amis_ids = social_service.ids_amis(acteur)
+    if amis_ids:
+        libelle = " — ".join(
+            str(v) for v in (type_objet.description, marque, model, immat) if v
+        )
+        notifier_groupe(
+            amis_ids,
+            f"Objet déclaré par {acteur.nom}",
+            (libelle or "Voir le détail de l'objet.")[:150],
+            type_notif="objet_declare",
+            id_sender=acteur.id,
+            entite_type="objet",
+            entite_id=objet.id,
+            lien=f"/objets/{objet.id}",
+        )
 
     audit_service.audit(
         action="objet_declare",
