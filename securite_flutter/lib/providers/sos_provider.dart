@@ -110,23 +110,35 @@ class SosProvider extends ChangeNotifier {
     }
   }
 
-  /// Minuteur local aligné sur l'échéance serveur.
+  /// Minuteur local aligné sur le TEMPS RESTANT fourni par le serveur.
+  ///
+  /// On ne compare jamais les heures absolues (serveur UTC, téléphone UTC+1) :
+  /// le serveur dit « il reste N secondes », le téléphone décrémente depuis
+  /// cette base — le chrono tourne alors quelle que soit l'heure de l'appareil.
+  DateTime? _depart;
+  int _baseSecondes = 0;
+
   void _resynchroniser() {
     _minuteur?.cancel();
     _minuteur = null;
     final sos = _sos;
     if (sos == null || !sos.enCours) {
-      _secondes = sos?.envoye == true ? 0 : 0;
+      _secondes = 0;
+      _depart = null;
       return;
     }
-    _secondes = sos.secondesRestantes;
+    _baseSecondes = sos.restantSecondes ?? sos.secondesRestantes;
+    _depart = DateTime.now();
+    _secondes = _baseSecondes;
     _minuteur = Timer.periodic(const Duration(seconds: 1), (timer) {
-      final restant = _sos?.secondesRestantes ?? 0;
+      final ecoule =
+          _depart == null ? 0 : DateTime.now().difference(_depart!).inSeconds;
+      final restant = _baseSecondes - ecoule;
       if (restant <= 0) {
         timer.cancel();
         _secondes = 0;
         notifyListeners();
-        // L'échéance est atteinte : le serveur envoie, on resynchronise.
+        // Échéance atteinte : le serveur envoie, on resynchronise l'état.
         Timer(const Duration(seconds: 3), () => rafraichir());
       } else {
         _secondes = restant;

@@ -10,6 +10,7 @@ class Sos {
     required this.statut,
     required this.dureeMinutes,
     required this.echeance,
+    this.restantSecondes,
     this.latitude,
     this.longitude,
     this.intermediaireAt,
@@ -30,6 +31,10 @@ class Sos {
   final String statut;
   final int dureeMinutes;
   final DateTime echeance;
+
+  /// Temps restant tel que calculé par le serveur (fiable quelle que soit
+  /// l'heure de l'appareil — voir `SosProvider`).
+  final int? restantSecondes;
   final double? latitude;
   final double? longitude;
   final DateTime? intermediaireAt;
@@ -42,6 +47,7 @@ class Sos {
         statut: JsonAide.texteDefaut(j, 'statut', 'programme'),
         dureeMinutes: JsonAide.entierDefaut(j, 'duree_minutes', 15),
         echeance: JsonAide.date(j, 'echeance') ?? DateTime.now(),
+        restantSecondes: JsonAide.entier(j, 'restant_secondes'),
         latitude: JsonAide.decimal(j, 'latitude'),
         longitude: JsonAide.decimal(j, 'longitude'),
         intermediaireAt: JsonAide.date(j, 'intermediaire_at'),

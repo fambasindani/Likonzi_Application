@@ -67,6 +67,9 @@ class Sos(db.Model, TimestampMixin):
             "statut": self.statut,
             "duree_minutes": self.duree_minutes,
             "echeance": self.echeance.isoformat() if self.echeance else None,
+            # Temps restant calculé CÔTÉ SERVEUR : le client décrémente localement
+            # à partir de cette valeur (immunité au décalage horaire appareil).
+            "restant_secondes": self.restant_secondes,
             "latitude": float(self.latitude) if self.latitude is not None else None,
             "longitude": float(self.longitude) if self.longitude is not None else None,
             "intermediaire_at": self.intermediaire_at.isoformat()
