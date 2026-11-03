@@ -134,6 +134,9 @@ class Alerte {
   bool get estNouvelle => statut == 'nouvelle';
   bool get assignee => idPolicierAssignee != null;
 
+  /// Saisie hors ligne : id négatif = jamais encore envoyée au serveur.
+  bool get enAttente => id < 0;
+
   String get emetteur =>
       [emetteurNom, emetteurPrenom].where((e) => e != null && e.isNotEmpty).join(' ');
 

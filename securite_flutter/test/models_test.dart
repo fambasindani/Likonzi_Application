@@ -4,6 +4,8 @@ import 'package:likonzi/models/dossier.dart';
 import 'package:likonzi/models/reponse_api.dart';
 import 'package:likonzi/models/social.dart';
 import 'package:likonzi/models/utilisateur.dart';
+import 'package:likonzi/services/file_attente_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   group('Parsing JSON du backend', () {
@@ -181,6 +183,49 @@ void main() {
       expect(r.succes, isFalse);
       expect(r.erreurs['email'], isNotEmpty);
       expect(r.erreurs.keys, containsAll(['email', 'telephone']));
+    });
+  });
+
+  group('Mode hors ligne (file d attente des alertes)', () {
+    test('Alerte sans id serveur est detectee en attente', () {
+      final locale = Alerte.brut({
+        'id': -1730000000000,
+        'reference': 'ALT-HORS-LIGNE',
+        'id_type_alerte': 1,
+        'contenu': 'Deux individus devant chez moi.',
+        'date_alerte': '2026-11-03T10:00:00',
+      });
+      expect(locale.enAttente, isTrue);
+      expect(locale.estNouvelle, isTrue);
+
+      final serveur = Alerte.brut({
+        'id': 12,
+        'reference': 'ALT-20261103-ABCDEF',
+        'id_type_alerte': 1,
+        'contenu': 'Deux individus devant chez moi.',
+      });
+      expect(serveur.enAttente, isFalse);
+    });
+
+    test('FileAttenteService : ajout, lecture, remplacement, vidage', () async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      SharedPreferences.setMockInitialValues({});
+      await FileAttenteService.vider();
+      expect(await FileAttenteService.charger(), isEmpty);
+
+      await FileAttenteService.ajouter({'id_type_alerte': 1, 'contenu': 'A'});
+      await FileAttenteService.ajouter({'id_type_alerte': 2, 'contenu': 'B'});
+      var file = await FileAttenteService.charger();
+      expect(file, hasLength(2));
+      expect(file.first['contenu'], 'A');
+      expect(file.last['contenu'], 'B');
+
+      await FileAttenteService.remplacer([file.first]);
+      file = await FileAttenteService.charger();
+      expect(file, hasLength(1));
+
+      await FileAttenteService.vider();
+      expect(await FileAttenteService.charger(), isEmpty);
     });
   });
 }

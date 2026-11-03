@@ -132,6 +132,12 @@ class CarteAlerte extends StatelessWidget {
                   icone: Icons.people_outline,
                   compact: true,
                 ),
+              if (alerte.enAttente)
+                const BadgeSimple(
+                  texte: 'Hors ligne',
+                  icone: Icons.cloud_off_outlined,
+                  compact: true,
+                ),
               if (alerte.adressePrecise != null && alerte.adressePrecise!.isNotEmpty)
                 BadgeSimple(
                   texte: alerte.adressePrecise!,

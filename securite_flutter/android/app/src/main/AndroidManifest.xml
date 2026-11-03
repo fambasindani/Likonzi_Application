@@ -48,6 +48,18 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- Widget d'accueil : raccourci SOS (ouvre l'application sur l'écran SOS) -->
+        <receiver
+            android:name=".SosWidget"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/sos_widget_info" />
+        </receiver>
     </application>
     <queries>
         <intent>

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../models/alerte.dart';
 import '../services/alerte_service.dart';
 import '../services/api_client.dart';
+import '../services/file_attente_service.dart';
 
 /// File des alertes (citoyen : les siennes — policier : son commissariat).
 class AlerteProvider extends ChangeNotifier {
@@ -135,19 +136,123 @@ class AlerteProvider extends ChangeNotifier {
     String? adressePrecise,
     int? idCommissariat,
   }) async {
-    final alerte = await _service.creer(
-      idTypeAlerte: idTypeAlerte,
-      contenu: contenu,
-      niveauUrgence: niveauUrgence,
-      latitude: latitude,
-      longitude: longitude,
-      adressePrecise: adressePrecise,
-      idCommissariat: idCommissariat,
-    );
-    _alertes.insert(0, alerte);
+    try {
+      final alerte = await _service.creer(
+        idTypeAlerte: idTypeAlerte,
+        contenu: contenu,
+        niveauUrgence: niveauUrgence,
+        latitude: latitude,
+        longitude: longitude,
+        adressePrecise: adressePrecise,
+        idCommissariat: idCommissariat,
+      );
+      _alertes.insert(0, alerte);
+      _total += 1;
+      notifyListeners();
+      // Le réseau vient de répondre : on rejoue ce qui était en attente.
+      await viderFileAttente();
+      return alerte;
+    } on ExceptionApi catch (e) {
+      if (!e.reseau) rethrow;
+      // Hors ligne : la saisie est conservée et partira dès le retour réseau.
+      return _mettreEnAttente(
+        idTypeAlerte: idTypeAlerte,
+        contenu: contenu,
+        niveauUrgence: niveauUrgence,
+        latitude: latitude,
+        longitude: longitude,
+        adressePrecise: adressePrecise,
+        idCommissariat: idCommissariat,
+      );
+    }
+  }
+
+  /// Alerte conservée localement en attendant le réseau (id négatif).
+  Future<Alerte> _mettreEnAttente({
+    required int idTypeAlerte,
+    required String contenu,
+    String? niveauUrgence,
+    double? latitude,
+    double? longitude,
+    String? adressePrecise,
+    int? idCommissariat,
+  }) async {
+    await FileAttenteService.ajouter({
+      'id_type_alerte': idTypeAlerte,
+      'contenu': contenu,
+      'niveau_urgence': niveauUrgence,
+      'latitude': latitude,
+      'longitude': longitude,
+      'adresse_precise': adressePrecise,
+      'id_commissariat': idCommissariat,
+      'enregistre_le': DateTime.now().toIso8601String(),
+    });
+
+    TypeAlerte? type;
+    for (final t in _types) {
+      if (t.id == idTypeAlerte) {
+        type = t;
+        break;
+      }
+    }
+
+    final locale = Alerte.brut({
+      'id': -DateTime.now().millisecondsSinceEpoch,
+      'reference': 'ALT-HORS-LIGNE',
+      'id_type_alerte': idTypeAlerte,
+      'contenu': contenu,
+      'niveau_urgence': niveauUrgence ?? 'moyen',
+      'statut': 'nouvelle',
+      'latitude': latitude,
+      'longitude': longitude,
+      'adresse_precise': adressePrecise,
+      'date_alerte': DateTime.now().toIso8601String(),
+      if (type != null) 'type': {'code': type.code, 'contenu': type.contenu},
+    });
+    _alertes.insert(0, locale);
     _total += 1;
     notifyListeners();
-    return alerte;
+    return locale;
+  }
+
+  /// Rejoue la file hors ligne. Renvoie le nombre d'alertes réellement envoyées.
+  Future<int> viderFileAttente() async {
+    final file = await FileAttenteService.charger();
+    if (file.isEmpty) return 0;
+
+    final restants = <Map<String, dynamic>>[];
+    var envoyees = 0;
+    for (final item in file) {
+      try {
+        await _service.creer(
+          idTypeAlerte: item['id_type_alerte'] as int,
+          contenu: item['contenu'] as String,
+          niveauUrgence: item['niveau_urgence'] as String?,
+          latitude: (item['latitude'] as num?)?.toDouble(),
+          longitude: (item['longitude'] as num?)?.toDouble(),
+          adressePrecise: item['adresse_precise'] as String?,
+          idCommissariat: item['id_commissariat'] as int?,
+        );
+        envoyees += 1;
+      } on ExceptionApi catch (e) {
+        if (e.reseau) {
+          // Toujours hors ligne : on arrête et on conserve le reste.
+          restants.add(item);
+          break;
+        }
+        // Erreur métier définitive (422…) : cet élément ne partira jamais.
+      } catch (_) {
+        restants.add(item);
+        break;
+      }
+    }
+    await FileAttenteService.remplacer(restants);
+
+    if (envoyees > 0) {
+      // Les alertes locales sont remplacées par les vraies (id serveur).
+      await charger(forcer: true);
+    }
+    return envoyees;
   }
 
   Future<Alerte> mettreAJour(Alerte alerte) async {

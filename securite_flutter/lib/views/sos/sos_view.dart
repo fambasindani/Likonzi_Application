@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../components/bouton.dart';
 import '../../components/carte_conteneur.dart';
 import '../../components/entete.dart';
 import '../../providers/carte_provider.dart';
 import '../../providers/sos_provider.dart';
+import '../../services/api_client.dart';
+import '../../services/geo_service.dart';
 import '../../theme/couleurs.dart';
 import '../../utils/messages.dart';
 
@@ -112,6 +115,44 @@ class _VueSosState extends State<VueSos> {
     );
   }
 
+  /// Appel direct : compose le numéro du commissariat le plus proche.
+  Future<void> _appelerPolice() async {
+    setState(() => _enAction = true);
+    try {
+      final carte = context.read<CarteProvider>();
+      if (carte.position == null) await carte.localiserAppareil();
+      final position = carte.position;
+      if (position == null) {
+        if (mounted) {
+          montrerErreur(context, 'Position introuvable : activez la localisation.');
+        }
+        return;
+      }
+      final proches = await GeoService.instance.commissariatsProches(
+        latitude: position.latitude,
+        longitude: position.longitude,
+        rayonKm: 80,
+        limite: 1,
+      );
+      final numero = proches.isEmpty
+          ? null
+          : (proches.first.telephone ?? '').replaceAll(RegExp(r'[^\d+]'), '');
+      if (numero == null || numero.isEmpty) {
+        if (mounted) {
+          montrerErreur(context, 'Aucun numéro de commissariat à proximité.');
+        }
+        return;
+      }
+      await launchUrl(Uri(scheme: 'tel', path: numero));
+    } on ExceptionApi catch (e) {
+      if (mounted) montrerErreur(context, e);
+    } catch (_) {
+      if (mounted) montrerErreur(context, "Impossible d'ouvrir le composeur.");
+    } finally {
+      if (mounted) setState(() => _enAction = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final sos = context.watch<SosProvider>();
@@ -178,6 +219,12 @@ class _VueSosState extends State<VueSos> {
           couleur: AppCouleurs.rouge,
           enCharge: _enAction || sos.enAction,
           onPressed: _declencher,
+        ),
+        const SizedBox(height: 10),
+        BoutonSecondaire(
+          texte: 'Appeler la police (commissariat le plus proche)',
+          icone: Icons.call_outlined,
+          onPressed: (_enAction || sos.enAction) ? null : _appelerPolice,
         ),
         const SizedBox(height: 12),
         const Text(
@@ -308,6 +355,12 @@ class _VueSosState extends State<VueSos> {
           couleurTexte: AppCouleurs.textePrimaire,
           enCharge: _enAction || sos.enAction,
           onPressed: _lever,
+        ),
+        const SizedBox(height: 10),
+        BoutonSecondaire(
+          texte: 'Appeler la police',
+          icone: Icons.call_outlined,
+          onPressed: (_enAction || sos.enAction) ? null : _appelerPolice,
         ),
         const SizedBox(height: 10),
         const Text(

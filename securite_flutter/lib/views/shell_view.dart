@@ -9,6 +9,7 @@ import '../providers/alerte_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/carte_provider.dart';
 import '../providers/social_provider.dart';
+import '../services/route_service.dart';
 import '../services/socket_service.dart';
 import '../theme/couleurs.dart';
 import '../utils/formatage.dart';
@@ -17,6 +18,7 @@ import 'alertes/alertes_view.dart';
 import 'boite/boite_view.dart';
 import 'carte/carte_view.dart';
 import 'dossiers/dossiers_view.dart';
+import 'sos/sos_view.dart';
 
 /// Coquille principale : barre de navigation en 5 onglets + temps réel.
 class ShellView extends StatefulWidget {
@@ -73,6 +75,14 @@ class _ShellViewState extends State<ShellView> {
 
     SocketService.instance.connecter();
 
+    // Widget d'accueil SOS : ouvrir directement l'écran SOS si demandé.
+    RouteService.initialiser(ouvrir: (route) {
+      if (!mounted || route != '/sos') return;
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const VueSos()),
+      );
+    });
+
     // Localisation continue : la position reste à jour pendant les déplacements.
     unawaited(context.read<CarteProvider>().demarrerSuivi());
 
@@ -80,6 +90,9 @@ class _ShellViewState extends State<ShellView> {
       alertes.charger(forcer: true),
       social.rafraichirCompteurs(),
     ]);
+
+    // Mode hors ligne : rejoue les alertes saisies sans réseau.
+    unawaited(alertes.viderFileAttente());
 
     // Les rôles arrivent parfois après la restauration locale : on adapte.
     if (auth.utilisateur != null) {
