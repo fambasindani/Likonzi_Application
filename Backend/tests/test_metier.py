@@ -485,6 +485,50 @@ check("l ami est notifie a la creation",
           for n in data_of(r)),
       str([n.get("type") for n in data_of(r)])[:200])
 
+# ------------------------------------- fichiers de l'alerte : lecture vs ecriture
+r = C.post(
+    f"{P}/preuves",
+    headers=auth(T_A),
+    data={
+        "entite_type": "alerte",
+        "entite_id": str(AL_AMI),
+        "type_preuve": "photo",
+        "description": "Photo jointee par l auteur",
+        "fichier": (io.BytesIO(PNG), "auteur.png"),
+    },
+    content_type="multipart/form-data",
+)
+PRE_AMI = data_of(r).get("id")
+check("l auteur televerse sur son alerte -> 201", r.status_code == 201,
+      str(r.status_code) + str(json_of(r))[:160])
+
+r = C.get(f"{P}/preuves?entite_type=alerte&entite_id={AL_AMI}", headers=auth(T_B))
+preuves_b = data_of(r)
+check("l ami voit les fichiers de l alerte",
+      any(p.get("id") == PRE_AMI for p in preuves_b), str(len(preuves_b)))
+
+r = C.get(f"{P}/preuves/{PRE_AMI}/telecharger", headers=auth(T_B))
+check("l ami telecharge le fichier -> 200", r.status_code == 200, str(r.status_code))
+
+r = C.post(
+    f"{P}/preuves",
+    headers=auth(T_B),
+    data={
+        "entite_type": "alerte",
+        "entite_id": str(AL_AMI),
+        "type_preuve": "photo",
+        "description": "Tentative de l ami",
+        "fichier": (io.BytesIO(PNG), "ami.png"),
+    },
+    content_type="multipart/form-data",
+)
+check("l ami ne peut PAS televerser sur l alerte d autrui -> 403", r.status_code == 403,
+      str(r.status_code) + str(json_of(r))[:160])
+
+r = C.get(f"{P}/preuves?entite_type=alerte&entite_id={AL_AMI}", headers=auth(T_X))
+check("l intrus ne voit aucun fichier -> 404 (entite invisible)",
+      r.status_code == 404, str(r.status_code))
+
 r = C.post(f"{P}/messages", headers=auth(T_A),
            json={"id_destinataire": ID_B, "messages": "Merci pour l'alerte partagée."})
 msg = data_of(r)

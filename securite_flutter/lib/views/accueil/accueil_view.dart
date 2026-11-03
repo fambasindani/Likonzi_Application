@@ -41,8 +41,8 @@ class _VueAccueilState extends State<VueAccueil> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
-      // Position d'abord : elle alimente la ville de l'en-tête.
-      await context.read<CarteProvider>().localiserAppareil();
+      // Position d'abord (fix frais) : elle alimente la ville de l'en-tête.
+      await context.read<CarteProvider>().localiserAppareil(forcer: true);
       if (mounted) await context.read<AlerteProvider>().charger(forcer: true);
       if (mounted) await context.read<SocialProvider>().rafraichirCompteurs();
       if (mounted) await context.read<SosProvider>().rafraichir();
@@ -65,15 +65,16 @@ class _VueAccueilState extends State<VueAccueil> {
     final carte = context.watch<CarteProvider>();
     final utilisateur = auth.utilisateur;
 
-    // « Citoyen • Kinshasa » — la ville vient du géocodage inverse du GPS.
+    // « Citoyen • Kinshasa » — ville réellement résolue depuis le GPS.
+    // Aucun repli fictif : sans position, on n'affiche que la fonction.
     final ligneProfil = utilisateur == null
         ? configSloganTexte
         : [
             utilisateur.fonction,
             if (utilisateur.commissariatNom != null)
               utilisateur.commissariatNom!
-            else
-              (carte.ville ?? 'Kinshasa'),
+            else if (carte.ville != null && carte.ville!.isNotEmpty)
+              carte.ville!,
           ].join(' • ');
 
     return Scaffold(

@@ -11,7 +11,7 @@ from sqlalchemy import or_
 from ..exceptions import ForbiddenError, NotFoundError, ValidationFailed
 from ..extensions import db
 from ..models import Alerte, Cas, Objet, Partage, Preuve, User
-from . import alerte_service, audit_service, cas_service
+from . import alerte_service, audit_service, cas_service, social_service
 from .validators import Payload
 
 CHEMIN_RELATIF = "preuves"
@@ -127,7 +127,16 @@ def creer(data: dict, fichier, acteur: User) -> Preuve:
             errors={"fichier": ["Envoyez le fichier dans le champ « fichier »."]},
         )
 
-    _charger_entite(entite_type, entite_id, acteur)
+    entite = _charger_entite(entite_type, entite_id, acteur)
+
+    # Les amis CONSULTENT les alertes de leurs contacts, mais le téléversement
+    # reste réservé à l'auteur de l'alerte (et aux forces de l'ordre).
+    if entite_type == "alerte" and not (
+        acteur.has_role(*ROLES_POLICE) or entite.id_user == acteur.id
+    ):
+        raise ForbiddenError(
+            "Seul l'auteur de l'alerte peut y ajouter des fichiers."
+        )
 
     ext = _extension(fichier.filename)
     nom_stocke = f"{uuid.uuid4().hex}.{ext}"
@@ -220,13 +229,25 @@ def _racine_uploads() -> str:
 
 
 def scope_preuves(query, user: User):
-    """Sélectionne les preuves que l'utilisateur est en droit de consulter."""
+    """Sélectionne les preuves que l'utilisateur est en droit de consulter.
+
+    Un ami consulte les fichiers des alertes **et des objets** de ses
+    contacts (lecture seule — voir `creer` pour le téléversement).
+    """
     if user.has_role(*ROLES_POLICE):
         return query  # le détail d'entité est revérifié à l'affichage
 
-    alertes = db.session.query(Alerte.id).filter(Alerte.id_user == user.id)
+    amis = social_service.ids_amis(user)
+    alertes = db.session.query(Alerte.id).filter(
+        or_(Alerte.id_user == user.id, Alerte.id_user.in_(amis))
+    )
     cas = db.session.query(Cas.id).filter(Cas.id_victime == user.id)
-    objets_possedes = db.session.query(Objet.id).filter(Objet.id_user_proprietaire == user.id)
+    objets_possedes = db.session.query(Objet.id).filter(
+        or_(
+            Objet.id_user_proprietaire == user.id,
+            Objet.id_user_proprietaire.in_(amis),
+        )
+    )
     # Les objets explicitement partagés avec l'utilisateur sont également visibles.
     objets_partages = db.session.query(Partage.id_objet).filter(
         Partage.id_destinataire == user.id

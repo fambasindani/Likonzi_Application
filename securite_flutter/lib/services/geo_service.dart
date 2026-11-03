@@ -20,8 +20,18 @@ class Lieu {
         distanceKm: JsonAide.decimal(j, 'distance_km'),
       );
 
-  /// Libellé affiché dans l'en-tête : la commune si elle est connue, sinon la ville.
-  String get affichage => (commune?.isNotEmpty ?? false) ? commune! : (ville ?? '');
+  /// Libellé affiché dans l'en-tête.
+  ///
+  /// La commune n'est affichée que si elle est vraiment proche (< 8 km) :
+  /// sinon on retombe sur la ville, pour ne jamais annoncer un quartier
+  /// lointain à l'utilisateur.
+  String get affichage {
+    final communeProche =
+        commune != null && commune!.isNotEmpty && (distanceKm ?? 0) <= 8;
+    if (communeProche) return commune!;
+    if (ville != null && ville!.isNotEmpty) return ville!;
+    return commune ?? '';
+  }
 }
 
 /// Position de l'appareil + endpoints de proximité.
