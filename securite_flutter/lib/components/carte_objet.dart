@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/objet.dart';
 import '../theme/couleurs.dart';
 import '../utils/formatage.dart';
+import '../utils/icone_objet.dart';
 import 'badge.dart';
 import 'carte_conteneur.dart';
 
@@ -13,17 +14,7 @@ class CarteObjet extends StatelessWidget {
   final Objet objet;
   final VoidCallback? onTap;
 
-  IconData get _iconeType => switch (objet.typeCode ?? '') {
-        'MOTO' => Icons.motorcycle_outlined,
-        'VOITURE' => Icons.directions_car_outlined,
-        'ORDINATEUR' => Icons.laptop_mac_outlined,
-        'TELEPHONE' => Icons.phone_iphone_outlined,
-        'VELO' => Icons.pedal_bike_outlined,
-        'BIJOUX' => Icons.diamond_outlined,
-        'DOCUMENT' => Icons.description_outlined,
-        'ELECTROMENAGER' => Icons.kitchen_outlined,
-        _ => Icons.inventory_2_outlined,
-      };
+  IconData get _iconeType => iconeTypeObjet(objet.typeCode);
 
   @override
   Widget build(BuildContext context) {

@@ -16,6 +16,7 @@ import '../../theme/couleurs.dart';
 import '../../utils/messages.dart';
 import 'objet_detail_view.dart';
 import '../../components/carte_conteneur.dart';
+import '../../utils/icone_objet.dart';
 import '../../utils/images.dart';
 
 /// Déclaration d'un objet volé.
@@ -325,7 +326,11 @@ class _VueCreationObjetState extends State<VueCreationObjet> {
                   icone: Icons.category_outlined,
                   options: [
                     for (final t in _types)
-                      OptionSelecteur(valeur: t.id, libelle: t.description),
+                      OptionSelecteur(
+                        valeur: t.id,
+                        libelle: t.description,
+                        icone: iconeTypeObjet(t.code),
+                      ),
                   ],
                   onChanged: (v) => setState(() => _idType = v),
                 ),

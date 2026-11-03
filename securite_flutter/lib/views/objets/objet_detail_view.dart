@@ -13,6 +13,7 @@ import '../../services/api_client.dart';
 import '../../services/objet_service.dart';
 import '../../theme/couleurs.dart';
 import '../../utils/formatage.dart';
+import '../../utils/icone_objet.dart';
 import '../../utils/messages.dart';
 import 'package:provider/provider.dart';
 import '../../components/avatar.dart';
@@ -307,8 +308,8 @@ class _VueDetailObjetState extends State<VueDetailObjet> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const IconeDomaine(
-                        icone: Icons.inventory_2_outlined,
+                      IconeDomaine(
+                        icone: iconeTypeObjet(_objet.typeCode),
                         couleur: AppCouleurs.bleu,
                       ),
                       const SizedBox(width: 12),

@@ -5,6 +5,7 @@ import '../models/alerte.dart';
 import '../providers/auth_provider.dart';
 import '../theme/couleurs.dart';
 import '../utils/formatage.dart';
+import '../utils/icone_alerte.dart';
 import 'avatar.dart';
 import 'badge.dart';
 import 'carte_conteneur.dart';
@@ -28,19 +29,7 @@ class CarteAlerte extends StatelessWidget {
   final VoidCallback? action;
   final String? libelleAction;
 
-  IconData get _iconeType => switch (alerte.typeCode ?? '') {
-        'DANGER' => Icons.dangerous_outlined,
-        'KULUNA' => Icons.mood_bad_outlined,
-        'AGRESSION' => Icons.g_mobiledata,
-        'ENLEVEMENT' => Icons.person_off_outlined,
-        'VOL' => Icons.inventory_2_outlined,
-        'INCENDIE' => Icons.local_fire_department_outlined,
-        'ACCIDENT' => Icons.car_crash_outlined,
-        'HOSPITALISATION' => Icons.local_hospital_outlined,
-        'VIOLENCE_FEMME' => Icons.female_outlined,
-        'AUTRE' => Icons.help_outline,
-        _ => Icons.notifications_active_outlined,
-      };
+  IconData get _iconeType => iconeTypeAlerte(alerte.typeCode);
 
   @override
   Widget build(BuildContext context) {

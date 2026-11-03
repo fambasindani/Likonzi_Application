@@ -170,6 +170,10 @@ class NotificationApp {
         return 'folder_special';
       case 'objet_retrouve':
         return 'search';
+      case 'objet_declare':
+        return 'inventory';
+      case 'sos':
+        return 'sos';
       case 'preuve_ajoutee':
         return 'attach_file';
       default:

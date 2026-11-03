@@ -10,6 +10,7 @@ import '../../services/api_client.dart';
 import '../../services/objet_service.dart';
 import '../../theme/couleurs.dart';
 import '../../utils/formatage.dart';
+import '../../utils/icone_objet.dart';
 import '../../utils/messages.dart';
 import 'objet_detail_view.dart';
 
@@ -227,17 +228,29 @@ class _VuePartagesState extends State<VuePartages> {
                                       color: AppCouleurs.blancCasse,
                                       borderRadius: BorderRadius.circular(12),
                                     ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          objet.designation,
-                                          style: const TextStyle(
-                                            fontSize: 14.5,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Icon(
+                                                  iconeTypeObjet(objet.typeCode),
+                                                  size: 18,
+                                                  color: AppCouleurs.bleu,
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Expanded(
+                                                  child: Text(
+                                                    objet.designation,
+                                                    style: const TextStyle(
+                                                      fontSize: 14.5,
+                                                      fontWeight: FontWeight.w800,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                         if (objet.identifiantPrincipal != null)
                                           Text(
                                             objet.identifiantPrincipal!,

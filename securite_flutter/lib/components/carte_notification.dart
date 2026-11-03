@@ -25,6 +25,8 @@ class CarteNotification extends StatelessWidget {
         'message' => AppCouleurs.bleu,
         'cas_maj' => AppCouleurs.orange,
         'objet_retrouve' => AppCouleurs.vert,
+        'objet_declare' => AppCouleurs.orange,
+        'sos' => AppCouleurs.rouge,
         _ => AppCouleurs.grisBleu,
       };
 
@@ -35,6 +37,8 @@ class CarteNotification extends StatelessWidget {
         'folder_special' => Icons.folder_special_outlined,
         'search' => Icons.search,
         'attach_file' => Icons.attach_file,
+        'inventory' => Icons.inventory_2_outlined,
+        'sos' => Icons.sos_outlined,
         _ => Icons.info_outline,
       };
 

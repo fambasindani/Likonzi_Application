@@ -10,6 +10,7 @@ import '../../providers/carte_provider.dart';
 import '../../services/api_client.dart';
 import '../../theme/couleurs.dart';
 import '../../utils/messages.dart';
+import '../../utils/icone_alerte.dart';
 import '../../utils/validations.dart';
 import 'alerte_detail_view.dart';
 
@@ -144,7 +145,7 @@ class _VueCreationAlerteState extends State<VueCreationAlerte> {
                     OptionSelecteur(
                       valeur: t.id,
                       libelle: t.contenu,
-                      icone: t.necessitePolice ? Icons.local_police_outlined : Icons.health_and_safety,
+                      icone: iconeTypeAlerte(t.code),
                     ),
                 ],
                 onChanged: (v) {
