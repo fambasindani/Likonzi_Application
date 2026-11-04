@@ -130,6 +130,12 @@ class SosProvider extends ChangeNotifier {
     _baseSecondes = sos.restantSecondes ?? sos.secondesRestantes;
     _depart = DateTime.now();
     _secondes = _baseSecondes;
+    if (_baseSecondes <= 0) {
+      // Échéance déjà atteinte : envoi automatique immédiat.
+      notifyListeners();
+      Timer(const Duration(seconds: 2), _envoyerApresEcheance);
+      return;
+    }
     _minuteur = Timer.periodic(const Duration(seconds: 1), (timer) {
       final ecoule =
           _depart == null ? 0 : DateTime.now().difference(_depart!).inSeconds;
@@ -138,13 +144,30 @@ class SosProvider extends ChangeNotifier {
         timer.cancel();
         _secondes = 0;
         notifyListeners();
-        // Échéance atteinte : le serveur envoie, on resynchronise l'état.
-        Timer(const Duration(seconds: 3), () => rafraichir());
+        // Échéance atteinte : envoi automatique (la veille serveur fait de
+        // même — double sécurité pour que le SOS parte TOUJOURS).
+        Timer(const Duration(seconds: 2), _envoyerApresEcheance);
       } else {
         _secondes = restant;
         notifyListeners();
       }
     });
+  }
+
+  /// Le compte à rebours est à zéro : on envoie le SOS tout de suite.
+  /// Si la veille serveur l'a déjà fait (404), on se contente de resynchroniser.
+  Future<void> _envoyerApresEcheance() async {
+    final sos = _sos;
+    if (sos == null || !sos.enCours) return; // déjà envoyé ou levé
+    try {
+      _sos = await _service.envoyer();
+    } on ExceptionApi catch (e) {
+      if (!e.introuvable) _erreur = e.message;
+    } catch (_) {
+      // Réseau indisponible : la veille serveur s'en charge.
+    }
+    _resynchroniser();
+    notifyListeners();
   }
 
   /// Tout événement SOS reçu (le sien ou celui d'un ami) resynchronise l'état.

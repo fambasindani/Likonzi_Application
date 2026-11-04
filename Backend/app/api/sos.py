@@ -18,6 +18,13 @@ def etat():
     return ok(data=sos_service.etat(current_user().id))
 
 
+@sos_bp.get("/sos/veille")
+@login_required
+def veille():
+    """Diagnostic de la tâche de fond qui envoie les SOS à l'échéance."""
+    return ok(data=sos_service.etat_veille())
+
+
 @sos_bp.post("/sos")
 @login_required
 def programmer():

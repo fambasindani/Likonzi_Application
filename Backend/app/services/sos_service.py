@@ -31,7 +31,7 @@ DUREE_DEFAUT = 15
 DUREE_MIN = 5
 DUREE_MAX = 60
 DELAI_INTERMEDIAIRE = 5  # minutes avant l'échéance
-INTERVALLE_VEILLE = 30  # secondes entre deux passages de la veille
+INTERVALLE_VEILLE = 15  # secondes entre deux passages de la veille
 
 STATUTS_ACTIFS = ("programme", "intermediaire")
 
@@ -286,9 +286,20 @@ def _finaliser(sos: Sos) -> None:
 
 # ----------------------------------------------------------------------- veille
 
+# État observable de la tâche de fond (exposé par `GET /sos/veille`).
+_veille_derniere_execution: datetime | None = None
+_veille_derniere_erreur: str | None = None
+_veille_traitees: int = 0
+_thread: threading.Thread | None = None
+
 
 def traiter() -> int:
-    """Passe les SOS dus : message intermédiaire puis échéance. Renvoie le nombre traités."""
+    """Passe les SOS dus : message intermédiaire puis échéance.
+
+    Chaque SOS est traité **dans sa propre transaction** : une erreur sur l'un
+    n'empêche jamais les autres, ni le passage suivant.
+    """
+    global _veille_traitees
     maintenant = datetime.now()
     traitees = 0
 
@@ -305,21 +316,27 @@ def traiter() -> int:
         .all()
     )
     for sos in intermediaires:
-        acteur = db.session.get(User, sos.id_user)
-        if acteur is None:
-            sos.statut = "annule"
-            continue
-        sos.statut = "intermediaire"
-        sos.intermediaire_at = maintenant
-        minutes = max(1, int((sos.echeance - maintenant).total_seconds() // 60))
-        nb = _diffuser(
-            sos,
-            _texte_intermediaire(sos, acteur, minutes),
-            evenement="sos_intermediaire",
-            type_notif="sos",
-        )
-        logger.info("SOS %s : alerte intermédiaire envoyée à %d ami(s).", sos.id, nb)
-        traitees += 1
+        try:
+            acteur = db.session.get(User, sos.id_user)
+            if acteur is None:
+                sos.statut = "annule"
+                db.session.commit()
+                continue
+            sos.statut = "intermediaire"
+            sos.intermediaire_at = maintenant
+            minutes = max(1, int((sos.echeance - maintenant).total_seconds() // 60))
+            nb = _diffuser(
+                sos,
+                _texte_intermediaire(sos, acteur, minutes),
+                evenement="sos_intermediaire",
+                type_notif="sos",
+            )
+            db.session.commit()
+            logger.info("SOS %s : alerte intermédiaire envoyée à %d ami(s).", sos.id, nb)
+            traitees += 1
+        except Exception:
+            logger.exception("SOS %s : alerte intermédiaire impossible", sos.id)
+            db.session.rollback()
 
     # 2. Échéances : SOS complet.
     dues = (
@@ -328,16 +345,33 @@ def traiter() -> int:
         .all()
     )
     for sos in dues:
-        _finaliser(sos)
-        logger.info("SOS %s : échéance atteinte, message envoyé.", sos.id)
-        traitees += 1
+        try:
+            _finaliser(sos)
+            db.session.commit()
+            logger.info("SOS %s : échéance atteinte, message envoyé.", sos.id)
+            traitees += 1
+        except Exception:
+            logger.exception("SOS %s : envoi à l'échéance impossible", sos.id)
+            db.session.rollback()
 
-    if traitees:
-        db.session.commit()
+    _veille_traitees += traitees
     return traitees
 
 
-_thread: threading.Thread | None = None
+def etat_veille() -> dict:
+    """Diagnostic de la tâche de fond : thread vivant ? dernière exécution ? erreur ?"""
+    return {
+        "actif": _thread is not None and _thread.is_alive(),
+        "intervalle_secondes": INTERVALLE_VEILLE,
+        "derniere_execution": (
+            _veille_derniere_execution.isoformat(timespec="seconds")
+            if _veille_derniere_execution
+            else None
+        ),
+        "derniere_erreur": _veille_derniere_erreur,
+        "traitees_total": _veille_traitees,
+        "heure_serveur": datetime.now().isoformat(timespec="seconds"),
+    }
 
 
 def demarrer_veille(app, intervalle: int = INTERVALLE_VEILLE) -> threading.Thread | None:
@@ -347,15 +381,19 @@ def demarrer_veille(app, intervalle: int = INTERVALLE_VEILLE) -> threading.Threa
         return _thread
 
     def _boucle() -> None:
+        global _veille_derniere_execution, _veille_derniere_erreur
         logger.info("Veille SOS démarrée (intervalle %ss).", intervalle)
         while True:
             time.sleep(intervalle)
             try:
                 with app.app_context():
+                    _veille_derniere_execution = datetime.now()
+                    _veille_derniere_erreur = None
                     traitees = traiter()
                     if traitees:
                         logger.info("Veille SOS : %d SOS traité(s).", traitees)
-            except Exception:
+            except Exception as exc:
+                _veille_derniere_erreur = f"{type(exc).__name__}: {exc}"
                 logger.exception("Veille SOS : erreur inattendue")
 
     _thread = threading.Thread(target=_boucle, name="veille-sos", daemon=True)
