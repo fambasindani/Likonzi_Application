@@ -38,6 +38,10 @@ class _VueBoiteState extends State<VueBoite> {
   bool _chargementAmis = true;
   String? _erreurAmis;
 
+  // Suggestions (personnes à connaître)
+  List<Suggestion> _suggestions = [];
+  bool _chargementSugg = true;
+
   // Demandes
   List<Demande> _demandes = [];
   bool _chargementDemandes = true;
@@ -61,8 +65,19 @@ class _VueBoiteState extends State<VueBoite> {
   }
 
   Future<void> _charger() async {
-    await Future.wait([_chargerAmis(), _chargerDemandes()]);
+    await Future.wait([_chargerAmis(), _chargerDemandes(), _chargerSuggestions()]);
     if (mounted) await context.read<SocialProvider>().chargerRecentes();
+  }
+
+  Future<void> _chargerSuggestions() async {
+    setState(() => _chargementSugg = true);
+    try {
+      _suggestions = await SocialService.instance.suggestions();
+    } catch (_) {
+      _suggestions = [];
+    } finally {
+      if (mounted) setState(() => _chargementSugg = false);
+    }
   }
 
   Future<void> _chargerAmis() async {
@@ -297,28 +312,79 @@ class _VueBoiteState extends State<VueBoite> {
         Expanded(
           child: _rechercheActive
               ? _listePersonnes(_trouves, avecBoutonDemande: true)
-              : (_amis.isEmpty
-                  ? ListView(
-                      children: [
-                        SizedBox(height: 50),
-                        EtatVide(
-                          icone: Icons.people_outline,
-                          titre: 'Aucun ami pour le moment',
-                          message:
-                              'Utilisez la recherche pour trouver un contact, ou répondez '
-                              'à une demande reçue.',
-                        ),
-                      ],
-                    )
-                  : _listePersonnes(_amis)),
+              : _listeAmisEtSuggestions(),
         ),
       ],
     );
   }
 
-  /// Liste de personnes **style Facebook** : grande photo ronde, nom en gras,
-  /// fonction en gris et séparateurs fins sur fond blanc.
-  /// La barre de recherche reste affichée au-dessus (voir `_amisTab`).
+  /// Onglet Amis : « Mes amis » puis « Suggestions pour vous » (style Facebook).
+  Widget _listeAmisEtSuggestions() {
+    if (_chargementAmis && _amis.isEmpty && _suggestions.isEmpty) {
+      return const EtatChargement();
+    }
+    if (_erreurAmis != null && _amis.isEmpty && _suggestions.isEmpty) {
+      return EtatErreur(message: _erreurAmis!, onReessayer: _chargerAmis);
+    }
+    return RefreshIndicator(
+      onRefresh: _charger,
+      color: AppCouleurs.bleu,
+      child: Container(
+        color: AppCouleurs.blanc,
+        child: ListView(
+          padding: const EdgeInsets.only(bottom: 24),
+          children: [
+            if (_amis.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: EtatVide(
+                  icone: Icons.people_outline,
+                  titre: 'Aucun ami pour le moment',
+                  message:
+                      'Consultez les suggestions ci-dessous, ou trouvez un contact '
+                      'via la recherche.',
+                ),
+              )
+            else ...[
+              _enteteSection('Mes amis · ${_amis.length}'),
+              for (final p in _amis) ...[
+                _lignePersonne(p),
+                _separateur(),
+              ],
+            ],
+            _enteteSection('Suggestions pour vous'),
+            if (_chargementSugg)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: EtatChargement(compact: true),
+              )
+            else if (_suggestions.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 18),
+                child: Text(
+                  'Aucune suggestion pour le moment — revenez plus tard.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13, color: AppCouleurs.texteSecondaire),
+                ),
+              )
+            else
+              for (final s in _suggestions) ...[
+                _lignePersonne(
+                  s.personne,
+                  sousTitre: s.amisCommuns > 0
+                      ? '${s.amisCommuns} ami(s) en commun'
+                      : s.personne.fonction,
+                  trailing: _boutonAjouter(s.personne),
+                ),
+                _separateur(),
+              ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Résultats de recherche (la barre de recherche reste au-dessus).
   Widget _listePersonnes(List<Utilisateur> personnes, {bool avecBoutonDemande = false}) {
     return RefreshIndicator(
       onRefresh: _chargerAmis,
@@ -328,89 +394,110 @@ class _VueBoiteState extends State<VueBoite> {
         child: ListView.separated(
           padding: const EdgeInsets.only(bottom: 24),
           itemCount: personnes.length,
-          separatorBuilder: (_, __) => const Padding(
-            padding: EdgeInsets.only(left: 86),
-            child: Divider(height: 1, thickness: 1, color: AppCouleurs.bordure),
-          ),
+          separatorBuilder: (_, __) => _separateur(),
           itemBuilder: (context, index) {
             final p = personnes[index];
             final dejaAmi = _amis.any((a) => a.id == p.id);
-            return InkWell(
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => VueConversation(destinataire: p),
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                child: Row(
-                  children: [
-                    AvatarUtilisateur.noms(
-                      nom: p.nom,
-                      prenom: p.prenom,
-                      url: p.urlAvatar,
-                      taille: 56,
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            p.nomComplet,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: AppCouleurs.textePrimaire,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            p.fonction,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: AppCouleurs.texteSecondaire,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (avecBoutonDemande && !dejaAmi)
-                      TextButton(
-                        onPressed: () => _envoyerDemande(p),
-                        style: TextButton.styleFrom(
-                          backgroundColor: AppCouleurs.bleuPastel,
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          minimumSize: const Size(0, 34),
-                        ),
-                        child: const Text(
-                          'Ajouter',
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w700,
-                            color: AppCouleurs.bleu,
-                          ),
-                        ),
-                      )
-                    else
-                      const Icon(
-                        Icons.chat_bubble_outline,
-                        color: AppCouleurs.grisBleu,
-                        size: 22,
-                      ),
-                  ],
-                ),
-              ),
+            return _lignePersonne(
+              p,
+              trailing: avecBoutonDemande && !dejaAmi ? _boutonAjouter(p) : null,
             );
           },
         ),
       ),
     );
   }
+
+  /// Ligne type Facebook : grande photo ronde, nom en gras, sous-titre.
+  Widget _lignePersonne(Utilisateur p, {String? sousTitre, Widget? trailing}) {
+    return InkWell(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => VueConversation(destinataire: p)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          children: [
+            AvatarUtilisateur.noms(
+              nom: p.nom,
+              prenom: p.prenom,
+              url: p.urlAvatar,
+              taille: 56,
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    p.nomComplet,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppCouleurs.textePrimaire,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    sousTitre ?? p.fonction,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppCouleurs.texteSecondaire,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            trailing ??
+                const Icon(
+                  Icons.chat_bubble_outline,
+                  color: AppCouleurs.grisBleu,
+                  size: 22,
+                ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _boutonAjouter(Utilisateur p) => TextButton(
+        onPressed: () => _envoyerDemande(p),
+        style: TextButton.styleFrom(
+          backgroundColor: AppCouleurs.bleuPastel,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          minimumSize: const Size(0, 34),
+        ),
+        child: const Text(
+          'Ajouter',
+          style: TextStyle(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w700,
+            color: AppCouleurs.bleu,
+          ),
+        ),
+      );
+
+  Widget _enteteSection(String titre) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
+        child: Text(
+          titre,
+          style: const TextStyle(
+            fontSize: 13.5,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.3,
+            color: AppCouleurs.texteSecondaire,
+          ),
+        ),
+      );
+
+  Widget _separateur() => const Padding(
+        padding: EdgeInsets.only(left: 86),
+        child: Divider(height: 1, thickness: 1, color: AppCouleurs.bordure),
+      );
 
   // --------------------------------------------------------------- demandes
 

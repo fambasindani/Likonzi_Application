@@ -61,6 +61,20 @@ class SocialService {
         .toList(growable: false);
   }
 
+  /// Suggestions « personnes que vous pourriez connaître » (amis en commun).
+  Future<List<Suggestion>> suggestions({int limite = 20}) async {
+    final corps = await _api.get('/amis/suggestions', params: {'limite': limite});
+    final data = corps is Map<String, dynamic> ? corps['data'] : null;
+    if (data is! List) return [];
+    return data.whereType<Map>().map((e) {
+      final j = Map<String, dynamic>.from(e);
+      return Suggestion(
+        personne: Utilisateur.brut(j),
+        amisCommuns: JsonAide.entierDefaut(j, 'amis_communs'),
+      );
+    }).toList(growable: false);
+  }
+
   // -------------------------------------------------------------- messages
 
   Future<Page<Message>> conversation(int idAutre, {int page = 1, int perPage = 50}) async {

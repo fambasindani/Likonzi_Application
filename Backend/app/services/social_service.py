@@ -234,6 +234,76 @@ def mes_amis(acteur: User, q: str | None = None) -> list[User]:
     return query.order_by(User.nom, User.prenom).all()
 
 
+def suggestions(acteur: User, limite: int = 20) -> list[tuple[User, int]]:
+    """« Personnes que vous pourriez connaître » — style Facebook.
+
+    Écarte l'utilisateur lui-même, ses amis et les demandes en attente (les
+    deux sens), puis classe par **nombre d'amis en commun** ; à défaut de lien,
+    propose les comptes actifs les plus récents. Renvoie `(utilisateur, amis_communs)`.
+    """
+    exclus: set[int] = {acteur.id, *ids_amis(acteur)}
+
+    # Demandes en attente (envoyées ou reçues) : pas encore ami, pas à proposer.
+    for d in (
+        db.session.query(Demande)
+        .filter(
+            Demande.statut == "en_attente",
+            or_(Demande.recev_id == acteur.id, Demande.envoi_id == acteur.id),
+        )
+        .all()
+    ):
+        exclus.add(d.envoi_id if d.recev_id == acteur.id else d.recev_id)
+
+    # Amis en commun : demandes acceptées impliquant un de mes amis.
+    mes_amis_ids = ids_amis(acteur)
+    scores: dict[int, int] = {}
+    if mes_amis_ids:
+        for d in (
+            db.session.query(Demande)
+            .filter(
+                Demande.statut == "acceptee",
+                or_(
+                    Demande.recev_id.in_(mes_amis_ids),
+                    Demande.envoi_id.in_(mes_amis_ids),
+                ),
+            )
+            .all()
+        ):
+            autre = d.recev_id if d.envoi_id in mes_amis_ids else d.envoi_id
+            if autre in exclus:
+                continue
+            scores[autre] = scores.get(autre, 0) + 1
+
+    if scores:
+        candidats = sorted(scores, key=lambda i: (-scores[i], i))[: limite * 2]
+    else:
+        # Sans lien : on propose les comptes actifs les plus récents.
+        candidats = [
+            r[0]
+            for r in (
+                db.session.query(User.id)
+                .filter(
+                    User.deleted_at.is_(None),
+                    User.statut == "actif",
+                    User.id.notin_(exclus),
+                )
+                .order_by(User.id.desc())
+                .limit(limite * 2)
+                .all()
+            )
+        ]
+    if not candidats:
+        return []
+
+    personnes = (
+        db.session.query(User)
+        .filter(User.id.in_(candidats), User.deleted_at.is_(None), User.statut == "actif")
+        .all()
+    )
+    personnes.sort(key=lambda u: (-scores.get(u.id, 0), u.nom, u.prenom or ""))
+    return [(u, scores.get(u.id, 0)) for u in personnes[:limite]]
+
+
 # ------------------------------------------------------------------------- messages
 
 

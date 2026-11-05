@@ -79,6 +79,31 @@ def amis():
     )
 
 
+@social_bp.get("/amis/suggestions")
+@login_required
+@require_permission("social.amis")
+def suggestions():
+    """Personnes que vous pourriez connaître (amis en commun d'abord)."""
+    limite = query_int("limite", 20) or 20
+    resultats = [
+        {
+            "id": u.id,
+            "nom": u.nom,
+            "postnom": u.postnom,
+            "prenom": u.prenom,
+            "avatar": u.avatar,
+            "id_commissariat": u.id_commissariat,
+            "commissariat": {"id": u.id_commissariat, "nom": u.commissariat_nom}
+            if u.id_commissariat
+            else None,
+            "roles": u.role_names,
+            "amis_communs": commun,
+        }
+        for u, commun in social_service.suggestions(current_user(), limite=limite)
+    ]
+    return ok(data=resultats, meta={"total": len(resultats)})
+
+
 @social_bp.get("/annuaire")
 @login_required
 @require_permission("social.amis")

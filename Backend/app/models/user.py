@@ -132,6 +132,11 @@ class User(db.Model, TimestampMixin, SoftDeleteMixin):
         return sorted(r.nom for r in self.roles)
 
     @property
+    def commissariat_nom(self) -> str | None:
+        """Nom du commissariat de rattachement (relation chargée en `joined`)."""
+        return self.commissariat.nom if self.commissariat else None
+
+    @property
     def permission_codes(self) -> set[str]:
         codes: set[str] = set()
         for role in self.roles:

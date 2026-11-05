@@ -1,4 +1,13 @@
 import 'reponse_api.dart';
+import 'utilisateur.dart';
+
+/// Suggestion « personnes que vous pourriez connaître » (amis en commun).
+class Suggestion {
+  Suggestion({required this.personne, this.amisCommuns = 0});
+
+  final Utilisateur personne;
+  final int amisCommuns;
+}
 
 /// Demande d'ami entre deux utilisateurs.
 class Demande {

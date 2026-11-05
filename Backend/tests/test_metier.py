@@ -529,6 +529,16 @@ r = C.get(f"{P}/preuves?entite_type=alerte&entite_id={AL_AMI}", headers=auth(T_X
 check("l intrus ne voit aucun fichier -> 404 (entite invisible)",
       r.status_code == 404, str(r.status_code))
 
+# ------------------------------------------------- suggestions (style Facebook)
+r = C.get(f"{P}/amis/suggestions", headers=auth(T_A))
+sugg = data_of(r)
+check("GET /amis/suggestions -> 200", r.status_code == 200,
+      str(r.status_code) + str(json_of(r))[:160])
+check("suggestions : exclut moi-meme", all(s.get("id") != ID_A for s in sugg), str(len(sugg)))
+check("suggestions : exclut mes amis", all(s.get("id") != ID_B for s in sugg), str(len(sugg)))
+check("suggestions : champ amis_communs present", all("amis_communs" in s for s in sugg),
+      str(sugg)[:150])
+
 r = C.post(f"{P}/messages", headers=auth(T_A),
            json={"id_destinataire": ID_B, "messages": "Merci pour l'alerte partagée."})
 msg = data_of(r)
