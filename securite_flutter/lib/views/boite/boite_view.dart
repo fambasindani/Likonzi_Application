@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../components/avatar.dart';
 import '../../components/badge.dart';
 import '../../components/bouton.dart';
 import '../../components/carte_conteneur.dart';
@@ -315,47 +316,98 @@ class _VueBoiteState extends State<VueBoite> {
     );
   }
 
+  /// Liste de personnes **style Facebook** : grande photo ronde, nom en gras,
+  /// fonction en gris et séparateurs fins sur fond blanc.
+  /// La barre de recherche reste affichée au-dessus (voir `_amisTab`).
   Widget _listePersonnes(List<Utilisateur> personnes, {bool avecBoutonDemande = false}) {
     return RefreshIndicator(
       onRefresh: _chargerAmis,
       color: AppCouleurs.bleu,
-      child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-        itemCount: personnes.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 10),
-        itemBuilder: (context, index) {
-          final p = personnes[index];
-          final dejaAmi = _amis.any((a) => a.id == p.id);
-          return CarteConversation(
-            nom: p.nomComplet,
-            sousTitre: p.fonction,
-            initiales: p.initiales,
-            urlAvatar: p.urlAvatar,
-            trailing: avecBoutonDemande && !dejaAmi
-                ? TextButton(
-                    onPressed: () => _envoyerDemande(p),
-                    style: TextButton.styleFrom(
-                      backgroundColor: AppCouleurs.bleuPastel,
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      minimumSize: const Size(0, 34),
+      child: Container(
+        color: AppCouleurs.blanc,
+        child: ListView.separated(
+          padding: const EdgeInsets.only(bottom: 24),
+          itemCount: personnes.length,
+          separatorBuilder: (_, __) => const Padding(
+            padding: EdgeInsets.only(left: 86),
+            child: Divider(height: 1, thickness: 1, color: AppCouleurs.bordure),
+          ),
+          itemBuilder: (context, index) {
+            final p = personnes[index];
+            final dejaAmi = _amis.any((a) => a.id == p.id);
+            return InkWell(
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => VueConversation(destinataire: p),
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                child: Row(
+                  children: [
+                    AvatarUtilisateur.noms(
+                      nom: p.nom,
+                      prenom: p.prenom,
+                      url: p.urlAvatar,
+                      taille: 56,
                     ),
-                    child: const Text(
-                      'Ajouter',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppCouleurs.bleu,
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            p.nomComplet,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: AppCouleurs.textePrimaire,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            p.fonction,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: AppCouleurs.texteSecondaire,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  )
-                : null,
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => VueConversation(destinataire: p),
+                    if (avecBoutonDemande && !dejaAmi)
+                      TextButton(
+                        onPressed: () => _envoyerDemande(p),
+                        style: TextButton.styleFrom(
+                          backgroundColor: AppCouleurs.bleuPastel,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          minimumSize: const Size(0, 34),
+                        ),
+                        child: const Text(
+                          'Ajouter',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: AppCouleurs.bleu,
+                          ),
+                        ),
+                      )
+                    else
+                      const Icon(
+                        Icons.chat_bubble_outline,
+                        color: AppCouleurs.grisBleu,
+                        size: 22,
+                      ),
+                  ],
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
